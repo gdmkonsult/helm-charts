@@ -149,7 +149,8 @@ Generate DEFAULT_USER_PASSWORD if not set, but preserve existing value on upgrad
 {{- else if .value -}}
 {{ .value }}
 {{- else -}}
-{{ randAlphaNum 16 }}
+{{- $cached := .context.Release.Name | sha256sum | trunc 16 -}}
+{{ $cached }}
 {{- end -}}
 {{- end -}}
 
