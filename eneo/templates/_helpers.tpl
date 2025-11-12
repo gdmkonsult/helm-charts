@@ -137,3 +137,27 @@ Generate INTRIC_SUPER_DUPER_API_KEY if not set, but preserve existing value on u
 {{ randAlphaNum 64 }}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Generate DEFAULT_USER_PASSWORD if not set, but preserve existing value on upgrade
+*/}}
+{{- define "eneo.generateDefaultUserPassword" -}}
+{{- $secretName := printf "%s-secrets" (include "eneo.fullname" .context) -}}
+{{- $secret := lookup "v1" "Secret" .context.Release.Namespace $secretName -}}
+{{- if $secret -}}
+{{- index $secret.data "DEFAULT_USER_PASSWORD" | b64dec -}}
+{{- else if .value -}}
+{{ .value }}
+{{- else -}}
+{{ randAlphaNum 16 }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Validate required values
+*/}}
+{{- define "eneo.validateValues" -}}
+{{- if not .Values.global.domain -}}
+{{- fail "global.domain is required. Please set it in your values.yaml or via --set global.domain=your-domain.com" -}}
+{{- end -}}
+{{- end -}}
