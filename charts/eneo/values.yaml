@@ -1,6 +1,6 @@
 # Global settings
 global:
-#  domain: "eneo-test.gdmnet.se"
+  domain:
 
 # Backend configuration
 backend:
