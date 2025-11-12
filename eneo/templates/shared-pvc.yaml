@@ -1,0 +1,37 @@
+{{- if .Values.sharedStorage.data.enabled -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "eneo.fullname" . }}-shared-data
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "eneo.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    {{- toYaml .Values.sharedStorage.data.accessModes | nindent 4 }}
+  {{- if .Values.sharedStorage.data.storageClass }}
+  storageClassName: {{ .Values.sharedStorage.data.storageClass }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.sharedStorage.data.size }}
+{{- end }}
+---
+{{- if .Values.sharedStorage.tmp.enabled -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "eneo.fullname" . }}-shared-tmp
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "eneo.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    {{- toYaml .Values.sharedStorage.tmp.accessModes | nindent 4 }}
+  {{- if .Values.sharedStorage.tmp.storageClass }}
+  storageClassName: {{ .Values.sharedStorage.tmp.storageClass }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.sharedStorage.tmp.size }}
+{{- end }}

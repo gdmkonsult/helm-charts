@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "eneo.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "eneo.labels" . | nindent 4 }}
+data:
+  NODE_ENV: {{ .Values.config.nodeEnv | quote }}
+  INTRIC_BACKEND_URL: {{ printf "https://%s" .Values.global.domain | quote }}
+  INTRIC_BACKEND_SERVER_URL: "http://{{ include "eneo.fullname" . }}-backend:{{ .Values.backend.service.port }}"
+  PUBLIC_INTRIC_BACKEND_URL: {{ printf "https://%s" .Values.global.domain | quote }}
+  REDIS_HOST: "{{ include "eneo.fullname" . }}-redis"
+  REDIS_PORT: {{ .Values.config.redisPort | quote }}
+  API_PREFIX: {{ .Values.config.apiPrefix | quote }}
+  API_KEY_LENGTH: {{ .Values.config.apiKeyLength | quote }}
+  API_KEY_HEADER_NAME: {{ .Values.config.apiKeyHeaderName | quote }}
+  JWT_AUDIENCE: {{ .Values.config.jwtAudience | quote }}
+  JWT_ISSUER: {{ .Values.config.jwtIssuer | quote }}
+  JWT_EXPIRY_TIME: {{ .Values.config.jwtExpiryTime | quote }}
+  JWT_ALGORITHM: {{ .Values.config.jwtAlgorithm | quote }}
+  JWT_TOKEN_PREFIX: {{ .Values.config.jwtTokenPrefix | quote }}
+  OIDC_STATE_TTL_SECONDS: {{ .Values.config.oidcStateTtlSeconds | quote }}
+  OIDC_REDIRECT_GRACE_PERIOD_SECONDS: {{ .Values.config.oidcRedirectGracePeriodSeconds | quote }}
+  STRICT_OIDC_REDIRECT_VALIDATION: {{ .Values.config.strictOidcRedirectValidation | quote }}
+  OIDC_CLOCK_LEEWAY_SECONDS: {{ .Values.config.oidcClockLeewaySeconds | quote }}
+  FEDERATION_PER_TENANT_ENABLED: {{ .Values.config.federationPerTenantEnabled | quote }}
+  TENANT_CREDENTIALS_ENABLED: {{ .Values.config.tenantCredentialsEnabled | quote }}
+  USING_ACCESS_MANAGEMENT: {{ .Values.config.usingAccessManagement | quote }}
+  USING_AZURE_MODELS: {{ .Values.config.usingAzureModels | quote }}
+  USING_IAM: {{ .Values.config.usingIam | quote }}
+  USING_IMAGE_GENERATION: {{ .Values.config.usingImageGeneration | quote }}
+  USING_CRAWL: {{ .Values.config.usingCrawl | quote }}
+  TESTING: {{ .Values.config.testing | quote }}
+  DEV: {{ .Values.config.dev | quote }}
+  WORKER_MAX_CONCURRENT_JOBS: {{ .Values.config.workerMaxConcurrentJobs | quote }}
+  TENANT_WORKER_CONCURRENCY_LIMIT: {{ .Values.config.tenantWorkerConcurrencyLimit | quote }}
+  TENANT_WORKER_SEMAPHORE_TTL_SECONDS: {{ .Values.config.tenantWorkerSemaphoreTtlSeconds | quote }}
+  TENANT_WORKER_RETRY_DELAY_SECONDS: {{ .Values.config.tenantWorkerRetryDelaySeconds | quote }}
+  UPLOAD_FILE_TO_SESSION_MAX_SIZE: {{ .Values.config.uploadFileToSessionMaxSize | quote }}
+  UPLOAD_IMAGE_TO_SESSION_MAX_SIZE: {{ .Values.config.uploadImageToSessionMaxSize | quote }}
+  UPLOAD_MAX_FILE_SIZE: {{ .Values.config.uploadMaxFileSize | quote }}
+  TRANSCRIPTION_MAX_FILE_SIZE: {{ .Values.config.transcriptionMaxFileSize | quote }}
+  MAX_IN_QUESTION: {{ .Values.config.maxInQuestion | quote }}
+  CRAWL_MAX_LENGTH: {{ .Values.config.crawlMaxLength | quote }}
+  CLOSESPIDER_ITEMCOUNT: {{ .Values.config.closespiderItemcount | quote }}
+  OBEY_ROBOTS: {{ .Values.config.obeyRobots | quote }}
+  AUTOTHROTTLE_ENABLED: {{ .Values.config.autothrottleEnabled | quote }}
+  AZURE_API_VERSION: {{ .Values.config.azureApiVersion | quote }}
+  MIGRATION_AUTO_RECALC_THRESHOLD: {{ .Values.config.migrationAutoRecalcThreshold | quote }}
+  LOGLEVEL: {{ .Values.config.loglevel | quote }}

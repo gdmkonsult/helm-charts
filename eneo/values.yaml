@@ -1,0 +1,209 @@
+# Global settings
+global:
+  domain: "eneo-test.gdmnet.se"
+
+# Backend configuration
+backend:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: ghcr.io/eneo-ai/eneo-backend
+    tag: "1.4.0"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8000
+    targetPort: 8000
+  resources: {}
+
+# Frontend configuration
+frontend:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: ghcr.io/eneo-ai/eneo-frontend
+    tag: "1.4.0"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 3000
+    targetPort: 3000
+  resources: {}
+
+# Worker configuration
+worker:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: ghcr.io/eneo-ai/eneo-backend
+    tag: "1.4.0"
+    pullPolicy: IfNotPresent
+  resources: {}
+
+# Redis configuration
+redis:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: redis
+    tag: "7-alpine"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 6379
+    targetPort: 6379
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: ""
+
+# PostgreSQL configuration (using CloudNativePG operator)
+postgres:
+  enabled: true
+  operatorManaged: true
+  imageName: ghcr.io/cloudnative-pg/postgresql:16
+  instances: 1
+  database: eneo
+  owner: eneo
+  storage:
+    size: 50Gi
+
+# Shared storage configuration
+sharedStorage:
+  data:
+    enabled: true
+    size: 100Gi
+    storageClass: gdm-ai-nfs
+    accessModes:
+      - ReadWriteMany
+  tmp:
+    enabled: true
+    size: 100Gi
+    storageClass: gdm-ai-nfs
+    accessModes:
+      - ReadWriteMany
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+    nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
+    nginx.ingress.kubernetes.io/proxy-busy-buffers-size: "256k"
+  # host will be set from global.domain
+  tls:
+    enabled: true
+    # secretName will be auto-generated
+
+# ConfigMap data
+config:
+  nodeEnv: "production"
+  # URLs are now derived from global.domain
+  redisPort: "6379"
+  apiPrefix: "/api/v1"
+  apiKeyLength: "64"
+  apiKeyHeaderName: "X-API-Key"
+  jwtAudience: "*"
+  jwtIssuer: "ENEO"
+  jwtExpiryTime: "86400"
+  jwtAlgorithm: "HS256"
+  jwtTokenPrefix: "Bearer"
+  oidcStateTtlSeconds: "600"
+  oidcRedirectGracePeriodSeconds: "600"
+  strictOidcRedirectValidation: "true"
+  oidcClockLeewaySeconds: "120"
+  federationPerTenantEnabled: "false"
+  tenantCredentialsEnabled: "true"
+  usingAccessManagement: "True"
+  usingAzureModels: "False"
+  usingIam: "False"
+  usingImageGeneration: "False"
+  usingCrawl: "True"
+  testing: "False"
+  dev: "False"
+  workerMaxConcurrentJobs: "20"
+  tenantWorkerConcurrencyLimit: "4"
+  tenantWorkerSemaphoreTtlSeconds: "36000"
+  tenantWorkerRetryDelaySeconds: "30"
+  uploadFileToSessionMaxSize: "10485760"
+  uploadImageToSessionMaxSize: "10485760"
+  uploadMaxFileSize: "10485760"
+  transcriptionMaxFileSize: "10485760"
+  maxInQuestion: "1"
+  crawlMaxLength: "14400"
+  closespiderItemcount: "20000"
+  obeyRobots: "True"
+  autothrottleEnabled: "True"
+  azureApiVersion: "2024-02-15-preview"
+  migrationAutoRecalcThreshold: "30"
+  loglevel: "INFO"
+
+# Secrets configuration
+secrets:
+  # Security keys - auto-generated if empty (DO NOT set in values.yaml for production)
+  jwtSecret: ""
+  urlSigningKey: ""
+  encryptionKey: ""
+  
+  # publicOrigin now derived from global.domain
+  
+  # OIDC Configuration
+  oidcDiscoveryEndpoint: ""
+  oidcClientId: ""
+  oidcClientSecret: ""
+  oidcTenantId: ""
+  
+  # LLM API Keys
+  gdmApiKey: ""
+  openaiApiKey: ""
+  anthropicApiKey: ""
+  geminiApiKey: ""
+  azureApiKey: ""
+  azureEndpoint: ""
+  azureApiBase: ""
+  azureModelDeployment: ""
+  mistralApiKey: ""
+  ovhcloudApiKey: ""
+  bergetApiKey: ""
+  bergetApiBase: ""
+  fluxApiKey: ""
+  tavilyApiKey: ""
+  vllmModelUrl: ""
+  vllmApiKey: ""
+  infinityUrl: ""
+  
+  # Default tenant/user configuration
+  defaultTenantName: "Default"
+  defaultTenantQuotaLimit: "10737418240"
+  defaultUserName: "firstuser"
+  defaultUserEmail: "first@example.com"
+  defaultUserPassword: "Password1!"
+  
+  # Internal services - auto-generated if empty
+  intricMarketplaceApiKey: ""
+  intricMarketplaceUrl: ""
+  intricSuperApiKey: ""
+  intricSuperDuperApiKey: ""
+  
+  # OAuth Integration
+  oauthCallbackUrl: ""
+  confluenceClientId: ""
+  confluenceClientSecret: ""
+  sharepointClientId: ""
+  sharepointClientSecret: ""
+  
+  # Legacy auth (deprecated)
+  mobilityguardDiscoveryEndpoint: ""
+  mobilityguardClientId: ""
+  mobilityguardClientSecret: ""
+  mobilityguardTenantId: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+nodeSelector: {}
+tolerations: []
+affinity: {}
