@@ -1,0 +1,13 @@
+questions:
+- variable: global.domain
+  default: "FQDN for your deployment (e.g., eneo.example.com)"
+  type: string
+  label: FQDN
+- variable: secrets.defaultUserName
+  default: "firstuser"
+  type: string
+  label: Default User Name
+- variable: secrets.defaultUserEmail
+  default: "first@example.com"
+  type: string
+  label: Default User Email
