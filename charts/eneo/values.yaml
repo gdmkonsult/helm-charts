@@ -178,9 +178,9 @@ secrets:
   # Default tenant/user configuration
   defaultTenantName: "Default"
   defaultTenantQuotaLimit: "10737418240"
-  defaultUserName: "firstuser"
-  defaultUserEmail: "first@example.com"
-  defaultUserPassword: ""
+  defaultUserName:
+  defaultUserEmail:
+  defaultUserPassword:
   
   # Internal services - auto-generated if empty
   intricMarketplaceApiKey: ""

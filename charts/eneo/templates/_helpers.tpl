@@ -142,17 +142,19 @@ Generate INTRIC_SUPER_DUPER_API_KEY if not set, but preserve existing value on u
 Generate DEFAULT_USER_PASSWORD if not set, but preserve existing value on upgrade
 */}}
 {{- define "eneo.generateDefaultUserPassword" -}}
+{{- if .value -}}
+{{ .value }}
+{{- else -}}
 {{- $secretName := printf "%s-secrets" (include "eneo.fullname" .context) -}}
 {{- $secret := lookup "v1" "Secret" .context.Release.Namespace $secretName -}}
 {{- if $secret -}}
 {{- index $secret.data "DEFAULT_USER_PASSWORD" | b64dec -}}
-{{- else if .value -}}
-{{ .value }}
 {{- else -}}
 {{- $cached := .context.Release.Name | sha256sum | trunc 16 -}}
 {{ $cached }}
 {{- end -}}
 {{- end -}}
+{{- end }}
 
 {{/*
 Validate required values
