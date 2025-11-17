@@ -177,7 +177,7 @@ secrets:
   
   # Default tenant/user configuration
   defaultTenantName: "Default"
-  defaultTenantQuotaLimit: "10737418240"
+  defaultTenantQuotaLimit: "53687091200"
   defaultUserName:
   defaultUserEmail:
   defaultUserPassword:
