@@ -31,7 +31,7 @@ models["embedding_models"].append({
 })
 
 # Write models to YAML file
-output_path = "/app/.venv/lib/python3.11/site-packages/intric/server/dependencies/ai_models.yml"
+output_path = "/app/data/ai_models.yml"
 
 with open(output_path, 'w') as f:
     yaml.dump(models, f, default_flow_style=False, sort_keys=False, allow_unicode=True)

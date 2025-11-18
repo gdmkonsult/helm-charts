@@ -30,6 +30,22 @@ spec:
           mountPath: /app/data
         - name: tmp
           mountPath: /tmp
+      - name: model-generator
+        image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+        securityContext:
+          runAsUser: 0
+        command: ["python3", "/app/generate_models.py"]
+        volumeMounts:
+        - name: data
+          mountPath: /app/data
+        - name: gdm-files
+          mountPath: "/app/generate_models.py"
+          subPath: generate_models.py
+        envFrom:
+        - configMapRef:
+            name: {{ include "eneo.fullname" . }}-config
+        - secretRef:
+            name: {{ include "eneo.fullname" . }}-secrets
       - name: init-db
         image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
         command: ["python3", "/app/init_db.py"]
@@ -71,7 +87,6 @@ spec:
       containers:
       - name: backend
         image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
-        command: ["sh", "-c", "python3 /app/generate_models.py && ./run.sh"]
         imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
         ports:
         - containerPort: {{ .Values.backend.service.targetPort }}
@@ -110,11 +125,11 @@ spec:
         volumeMounts:
         - name: data
           mountPath: /app/data
+        - name: data
+          mountPath: /app/.venv/lib/python3.11/site-packages/intric/server/dependencies/ai_models.yml
+          subPath: ai_models.yml
         - name: tmp
           mountPath: /tmp
-        - name: gdm-files
-          mountPath: "/app/generate_models.py"
-          subPath: generate_models.py
         {{- with .Values.backend.resources }}
         resources:
           {{- toYaml . | nindent 10 }}
