@@ -121,7 +121,7 @@ config:
   oidcRedirectGracePeriodSeconds: "600"
   strictOidcRedirectValidation: "true"
   oidcClockLeewaySeconds: "120"
-  federationPerTenantEnabled: "true"
+  federationPerTenantEnabled: "false"
   tenantCredentialsEnabled: "true"
   usingAccessManagement: "True"
   usingAzureModels: "True"
@@ -155,12 +155,6 @@ secrets:
   encryptionKey: ""
   
   # publicOrigin now derived from global.domain
-  
-  # OIDC Configuration
-  oidcDiscoveryEndpoint: ""
-  oidcClientId: ""
-  oidcClientSecret: ""
-  oidcTenantId: ""
   
   # LLM API Keys
   gdmApiKey: ""
