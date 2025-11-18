@@ -21,6 +21,7 @@ from intric.ai_models.embedding_models.embedding_models_repo import (
 )
 from intric.database.database import sessionmanager
 from intric.main.logging import get_logger
+from intric.main.config import get_settings
 
 logger = get_logger(__name__)
 
@@ -82,6 +83,10 @@ async def create_models(
     model_create: type[CompletionModelCreate] | type[EmbeddingModelCreate],
     model_update: type[CompletionModelUpdate] | type[EmbeddingModelUpdate],
 ):
+    settings = get_settings()
+    db_url = f"postgresql+asyncpg://{settings.postgres_user}:{settings.postgres_password}@{settings.postgres_host}:{settings.postgres_port}/{settings.postgres_db}"
+    
+    sessionmanager.init(db_url)
     async with sessionmanager.session() as session, session.begin():
         repository = repository(session=session)
 
