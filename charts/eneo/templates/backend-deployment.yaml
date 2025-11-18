@@ -37,6 +37,9 @@ spec:
         - name: gdm-files
           mountPath: /app/.venv/lib/python3.11/site-packages/intric/server/dependencies/ai_models.yml
           subPath: ai_models.yml
+        - name: gdm-files
+          mountPath: "/app/init_db.py"
+          subPath: init_db.py
         env:
         - name: POSTGRES_USER
           valueFrom:
