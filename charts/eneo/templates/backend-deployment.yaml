@@ -33,6 +33,10 @@ spec:
       - name: init-db
         image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
         command: ["python3", "/app/init_db.py"]
+        volumeMounts:
+        - name: gdm-files
+          mountPath: /app/src/intric/server/dependencies/ai_models.yml
+          subPath: ai_models.yml
         env:
         - name: POSTGRES_USER
           valueFrom:
@@ -107,9 +111,6 @@ spec:
           mountPath: /app/data
         - name: tmp
           mountPath: /tmp
-        - name: gdm-files
-          mountPath: /app/src/intric/server/dependencies/ai_models.yml
-          subPath: ai_models.yml
         {{- with .Values.backend.resources }}
         resources:
           {{- toYaml . | nindent 10 }}
