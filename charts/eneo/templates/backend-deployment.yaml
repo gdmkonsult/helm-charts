@@ -107,6 +107,9 @@ spec:
           mountPath: /app/data
         - name: tmp
           mountPath: /tmp
+        - name: ai-models-config
+          mountPath: /app/src/intric/server/dependencies/ai_models.yml
+          subPath: ai_models.yml
         {{- with .Values.backend.resources }}
         resources:
           {{- toYaml . | nindent 10 }}
@@ -118,4 +121,7 @@ spec:
       - name: tmp
         persistentVolumeClaim:
           claimName: {{ include "eneo.fullname" . }}-shared-tmp
+      - name: ai-models-config
+        configMap:
+          name: {{ include "eneo.fullname" . }}-files
 {{- end }}
