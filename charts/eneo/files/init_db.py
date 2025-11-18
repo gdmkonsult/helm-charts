@@ -1,6 +1,4 @@
 import subprocess
-import time
-import sys
 
 import bcrypt
 import psycopg2
@@ -157,6 +155,64 @@ def add_tenant_user(conn, tenant_name, quota_limit, user_name, user_email, user_
             )
             cur.execute(assign_role_to_user_query, (user_id, predefined_role_id))
 
+        # Check if any completion model exists and assign it to the user
+        check_completion_models_query = sql.SQL(
+            "SELECT id FROM completion_models limit 1"
+        )
+        cur.execute(check_completion_models_query)
+        completion_model = cur.fetchone()
+
+        if completion_model is None:
+            # Check if gemma3-27b-it exists
+            check_model_query = sql.SQL("SELECT id FROM completion_models WHERE name = %s")
+            cur.execute(check_model_query, ("gemma3-27b-it",))
+            model = cur.fetchone()
+
+            # Add completion model if none exist
+            if model is None:
+                add_model_query = sql.SQL(
+                    """INSERT INTO completion_models
+                    (name, nickname, family, token_limit, stability, hosting, description, org, vision, reasoning, litellm_model_name)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id"""
+                )
+                cur.execute(
+                    add_model_query,
+                    (
+                        "gemma3-27b-it",
+                        "gemma3-27b-it",
+                        "openai",
+                        128000,
+                        "stable",
+                        "swe",
+                        "Google's Gemma 3 27B instruction-tuned model, hosted by GDM in Sweden (ai.gdm.se).",
+                        "GDM",
+                        True,
+                        False,
+                        "gdm/gemma3-27b-it",
+                    ),
+                )
+                model_id = cur.fetchone()[0]
+            else:
+                model_id = model[0]
+        else:
+            model_id = completion_model[0]
+
+        # Enable the completion model for the tenant
+        check_model_setting_query = sql.SQL(
+            """SELECT 1 FROM completion_model_settings
+            WHERE completion_model_id = %s AND tenant_id = %s"""
+        )
+        cur.execute(check_model_setting_query, (model_id, tenant_id))
+        model_setting = cur.fetchone()
+
+        if model_setting is None:
+            enable_model_query = sql.SQL(
+                """INSERT INTO completion_model_settings
+                (completion_model_id, tenant_id, is_org_enabled, is_org_default)
+                VALUES (%s, %s, %s, %s)"""
+            )
+            cur.execute(enable_model_query, (model_id, tenant_id, True, True))
+
         conn.commit()
         cur.close()
         print("Great! Your Tenant and User are all set up.")
@@ -169,7 +225,6 @@ def add_tenant_user(conn, tenant_name, quota_limit, user_name, user_email, user_
 if __name__ == "__main__":
     # Wait for PostgreSQL to be ready
     wait_for_postgres()
-    
     # Run alembic migrations
     run_alembic_migrations()
 
