@@ -98,7 +98,13 @@ ingress:
     enabled: true
     # secretName will be auto-generated
 
-# ConfigMap data
+oidc:
+  enabled: false
+  discoveryUrl: ""
+  clientId: ""
+  clientSecret: ""
+
+# ConfigMap data§
 config:
   nodeEnv: "production"
   # URLs are now derived from global.domain

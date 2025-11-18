@@ -107,13 +107,24 @@ spec:
           mountPath: /app/data
         - name: tmp
           mountPath: /tmp
-        - name: ai-models-config
+        - name: gdm-files
           mountPath: /app/src/intric/server/dependencies/ai_models.yml
           subPath: ai_models.yml
         {{- with .Values.backend.resources }}
         resources:
           {{- toYaml . | nindent 10 }}
         {{- end }}
+      - name: gdm-config-setter
+        image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+        imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+        command: ["python3", "/app/gdm.py"]
+        volumeMounts:
+        - name: gdm-files
+          mountPath: "/app/gdm.py"
+          subPath: gdm.py
+        - name: gdm-files
+          mountPath: "/app/oidc.json"
+          subPath: oidc.json
       volumes:
       - name: data
         persistentVolumeClaim:
@@ -121,7 +132,7 @@ spec:
       - name: tmp
         persistentVolumeClaim:
           claimName: {{ include "eneo.fullname" . }}-shared-tmp
-      - name: ai-models-config
+      - name: gdm-files
         configMap:
           name: {{ include "eneo.fullname" . }}-files
 {{- end }}

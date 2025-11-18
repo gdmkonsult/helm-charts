@@ -7,3 +7,7 @@ metadata:
 data:
   ai_models.yml: |
 {{ .Files.Get "files/ai_models.yml" | indent 4 }}
+  gdm.py: |
+{{ .Files.Get "files/gdm.py" | indent 4 }}
+  oidc.json: |
+{{ .Values.oidc | toJson | indent 4 }}
