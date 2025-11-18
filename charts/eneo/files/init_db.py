@@ -175,7 +175,7 @@ def add_tenant_user(conn, tenant_name, quota_limit, user_name, user_email, user_
                 add_model_query = sql.SQL(
                     """INSERT INTO completion_models
                     (name, nickname, family, token_limit, stability, hosting, description, org, vision, reasoning, litellm_model_name)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id"""
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id"""
                 )
                 cur.execute(
                     add_model_query,
