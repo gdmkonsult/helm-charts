@@ -24,9 +24,9 @@ from intric.main.logging import get_logger
 
 logger = get_logger(__name__)
 
-url = "https://gdm-allo.ai.gdm.se/"
+url = "http://localhost:8000"
 superapikey = os.getenv("INTRIC_SUPER_API_KEY")
-superduperapikey = os.getenv("INTRIC_SUPERDUPER_API_KEY")
+superduperapikey = os.getenv("INTRIC_SUPER_DUPER_API_KEY")
 
 models = { "completion_models": [], "embedding_models": [] }
 
@@ -135,10 +135,9 @@ if __name__ == "__main__":
         wait_for_health()
         print("Entering main loop...")
         r = requests.get(f"{url.rstrip('/')}/api/v1/sysadmin/tenants/", headers={"X-API-KEY": superapikey})
-        print(r.json())
         tenant_id = r.json()['items'][0]['id']
         
-        r = requests.get(f"{url.rstrip('/')}/api/v1/modules/", headers={"X-API-KEY": superapikey})
+        r = requests.get(f"{url.rstrip('/')}/api/v1/modules/", headers={"X-API-KEY": superduperapikey})
         print(r.json())
         for module in r.json()['items']:
             if module['name'] == 'SWE Models':
