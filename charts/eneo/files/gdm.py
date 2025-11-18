@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import json
 import time
 import requests
 import os
@@ -65,6 +66,22 @@ if __name__ == "__main__":
             headers={"X-API-KEY": superduperapikey},
             json=[{"id": module_id}]
         )
+        
+        with open("/app/oidc.json", "r") as f:
+            oidc_config = json.loads(f.read())
+            if oidc_config.get("enabled", False):
+                r = requests.put(
+                    f"{url.rstrip('/')}/api/v1/sysadmin/tenants/{tenant_id}/federation",
+                    headers={"X-API-KEY": superapikey},
+                    json={
+                        "provider": oidc_config.get("providerName", ""),
+                        "client_id": oidc_config.get("clientId", ""),
+                        "client_secret": oidc_config.get("clientSecret", ""),
+                        "discovery_endpoint": oidc_config.get("discoveryUrl", ""),
+                        "redirect_path": "/oauth/callback",
+                    }
+                )
+                print("OIDC enabled:", r.status_code, r.text)
         
         while True:
             time.sleep(86400)  # Sleep for 24 hours at a time
