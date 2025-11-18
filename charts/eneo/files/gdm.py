@@ -135,6 +135,7 @@ if __name__ == "__main__":
         wait_for_health()
         print("Entering main loop...")
         r = requests.get(f"{url.rstrip('/')}/api/v1/sysadmin/tenants/", headers={"X-API-KEY": superapikey})
+        print(r.json())
         tenant_id = r.json()['items'][0]['id']
         
         r = requests.get(f"{url.rstrip('/')}/api/v1/modules/", headers={"X-API-KEY": superduperapikey})
