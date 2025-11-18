@@ -35,7 +35,7 @@ spec:
         command: ["python3", "/app/init_db.py"]
         volumeMounts:
         - name: gdm-files
-          mountPath: /app/src/intric/server/dependencies/ai_models.yml
+          mountPath: /app/.venv/lib/python3.11/site-packages/intric/server/dependencies/ai_models.yml
           subPath: ai_models.yml
         env:
         - name: POSTGRES_USER
@@ -112,7 +112,7 @@ spec:
         - name: tmp
           mountPath: /tmp
         - name: gdm-files
-          mountPath: /app/src/intric/server/dependencies/ai_models.yml
+          mountPath: /app/.venv/lib/python3.11/site-packages/intric/server/dependencies/ai_models.yml
           subPath: ai_models.yml
         {{- with .Values.backend.resources }}
         resources:
