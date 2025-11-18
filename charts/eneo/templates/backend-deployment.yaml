@@ -32,6 +32,8 @@ spec:
           mountPath: /tmp
       - name: model-generator
         image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+        securityContext:
+          runAsUser: 0
         command: ["python3", "/app/generate_models.py"]
         volumeMounts:
         - name: gdm-files
