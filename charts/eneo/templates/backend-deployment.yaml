@@ -126,6 +126,9 @@ spec:
         - name: gdm-files
           mountPath: "/app/oidc.json"
           subPath: oidc.json
+        - name: gdm-files
+          mountPath: /app/src/intric/server/dependencies/ai_models.yml
+          subPath: ai_models.yml
       volumes:
       - name: data
         persistentVolumeClaim:
