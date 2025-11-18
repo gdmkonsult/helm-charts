@@ -1,6 +1,6 @@
 import subprocess
-import uuid
-from datetime import datetime, timezone
+import time
+import sys
 
 import bcrypt
 import psycopg2
@@ -26,6 +26,40 @@ class Settings(BaseSettings):
     default_user_password: Optional[str] = None
 
 settings = Settings()
+
+# Wait for PostgreSQL to be ready
+def wait_for_postgres(max_retries=30, initial_delay=1, max_delay=10):
+    """
+    Wait for PostgreSQL to be ready with exponential backoff.
+    
+    Args:
+        max_retries: Maximum number of connection attempts
+        initial_delay: Initial delay in seconds between retries
+        max_delay: Maximum delay in seconds between retries
+    """
+    delay = initial_delay
+    for attempt in range(max_retries):
+        try:
+            conn = psycopg2.connect(
+                host=settings.postgres_host,
+                port=settings.postgres_port,
+                dbname=settings.postgres_db,
+                user=settings.postgres_user,
+                password=settings.postgres_password,
+                connect_timeout=5
+            )
+            conn.close()
+            print("PostgreSQL is ready!")
+            return True
+        except psycopg2.OperationalError as e:
+            if attempt < max_retries - 1:
+                print(f"PostgreSQL not ready yet (attempt {attempt + 1}/{max_retries}). Waiting {delay}s... Error: {e}")
+                time.sleep(delay)
+                delay = min(delay * 2, max_delay)  # Exponential backoff with cap
+            else:
+                print(f"Failed to connect to PostgreSQL after {max_retries} attempts.")
+                sys.exit(1)
+    return False
 
 # Alembic command
 def run_alembic_migrations():
@@ -123,27 +157,6 @@ def add_tenant_user(conn, tenant_name, quota_limit, user_name, user_email, user_
             )
             cur.execute(assign_role_to_user_query, (user_id, predefined_role_id))
 
-
-        # Create organization space for the tenant (if not already exists)
-        check_org_space_query = sql.SQL(
-            """SELECT id FROM spaces
-            WHERE tenant_id = %s AND user_id IS NULL AND tenant_space_id IS NULL"""
-        )
-        cur.execute(check_org_space_query, (tenant_id,))
-        org_space = cur.fetchone()
-
-        if org_space is None:
-            org_space_id = str(uuid.uuid4())
-            now = datetime.now(timezone.utc)
-            add_org_space_query = sql.SQL(
-                """INSERT INTO spaces (id, name, description, tenant_id, user_id, tenant_space_id, created_at, updated_at)
-                VALUES (%s, %s, %s, %s, NULL, NULL, %s, %s)"""
-            )
-            cur.execute(
-                add_org_space_query,
-                (org_space_id, "Organization space", "Delad knowledge för hela tenant", tenant_id, now, now),
-            )
-
         conn.commit()
         cur.close()
         print("Great! Your Tenant and User are all set up.")
@@ -154,6 +167,9 @@ def add_tenant_user(conn, tenant_name, quota_limit, user_name, user_email, user_
 
 # Main script
 if __name__ == "__main__":
+    # Wait for PostgreSQL to be ready
+    wait_for_postgres()
+    
     # Run alembic migrations
     run_alembic_migrations()
 
