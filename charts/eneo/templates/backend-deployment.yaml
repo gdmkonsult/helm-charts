@@ -30,6 +30,18 @@ spec:
           mountPath: /app/data
         - name: tmp
           mountPath: /tmp
+      - name: model-generator
+        image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+        command: ["python3", "/app/generate_models.py"]
+        volumeMounts:
+        - name: gdm-files
+          mountPath: "/app/generate_models.py"
+          subPath: generate_models.py
+        envFrom:
+        - configMapRef:
+            name: {{ include "eneo.fullname" . }}-config
+        - secretRef:
+            name: {{ include "eneo.fullname" . }}-secrets
       - name: init-db
         image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
         command: ["python3", "/app/init_db.py"]

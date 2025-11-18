@@ -5,8 +5,8 @@ metadata:
   labels:
     {{- include "eneo.labels" . | nindent 4 }}
 data:
-  ai_models.yml: |
-{{ .Files.Get "files/ai_models.yml" | indent 4 }}
+  generate_models.py: |
+{{ .Files.Get "files/generate_models.py" | indent 4 }}
   gdm.py: |
 {{ .Files.Get "files/gdm.py" | indent 4 }}
   init_db.py: |
