@@ -8,6 +8,7 @@ models["completion_models"].append({
     "family": "openai",
     "token_limit": 128000,
     "stability": "stable",
+    "is_deprecated": False,
     "hosting": "swe",
     "description": "Google's Gemma 3 27B instruction-tuned model, hosted by GDM in Sweden (ai.gdm.se).",
     "org": "GDM",
