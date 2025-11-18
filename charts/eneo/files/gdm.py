@@ -25,8 +25,8 @@ from intric.main.logging import get_logger
 logger = get_logger(__name__)
 
 url = "https://gdm-allo.ai.gdm.se/"
-superapikey = os.getenv("INTRIC_SUPER_API_KEY","lmFy31Us0GxDsz4I2SjX7W21gdcx9EKg")
-superduperapikey = os.getenv("INTRIC_SUPERDUPER_API_KEY","6tbN9CbxgylpdCwiSIPJaUf002ERlktfr05Sjc4qKtTACiK7Xhr69ABcHqeNJ35W")
+superapikey = os.getenv("INTRIC_SUPER_API_KEY")
+superduperapikey = os.getenv("INTRIC_SUPERDUPER_API_KEY")
 
 models = { "completion_models": [], "embedding_models": [] }
 

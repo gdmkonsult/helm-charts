@@ -125,6 +125,11 @@ spec:
         image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
         imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
         command: ["python3", "/app/gdm.py"]
+        envFrom:
+        - configMapRef:
+            name: {{ include "eneo.fullname" . }}-config
+        - secretRef:
+            name: {{ include "eneo.fullname" . }}-secrets
         volumeMounts:
         - name: gdm-files
           mountPath: "/app/gdm.py"
