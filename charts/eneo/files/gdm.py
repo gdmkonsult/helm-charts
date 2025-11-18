@@ -138,7 +138,7 @@ if __name__ == "__main__":
         print(r.json())
         tenant_id = r.json()['items'][0]['id']
         
-        r = requests.get(f"{url.rstrip('/')}/api/v1/modules/", headers={"X-API-KEY": superduperapikey})
+        r = requests.get(f"{url.rstrip('/')}/api/v1/modules/", headers={"X-API-KEY": superapikey})
         print(r.json())
         for module in r.json()['items']:
             if module['name'] == 'SWE Models':
