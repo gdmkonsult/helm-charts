@@ -82,7 +82,19 @@ if __name__ == "__main__":
                     }
                 )
                 print("OIDC enabled:", r.status_code, r.text)
-        
+
+        with open("/app/gdm.json", "r") as f:
+            gdm_config = json.loads(f.read())
+            if gdm_config.get("enabled", False):
+                r = requests.put(
+                    f"{url.rstrip('/')}/api/v1/sysadmin/tenants/{tenant_id}/credentials/gdm",
+                    headers={"X-API-KEY": superapikey},
+                    json={
+                        "api_key": gdm_config.get("apiKey", ""),
+                    }
+                )
+                print("GDM enabled:", r.status_code, r.text)
+
         while True:
             time.sleep(86400)  # Sleep for 24 hours at a time
     except KeyboardInterrupt:
