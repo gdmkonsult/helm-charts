@@ -17,6 +17,21 @@ models["completion_models"].append({
     "litellm_model_name": "gdm/gemma3-27b-it"
 })
 
+models["completion_models"].append({
+    "name": "gpt-oss-120b",
+    "nickname": "gpt-oss-120b",
+    "family": "openai",
+    "token_limit": 128000,
+    "stability": "stable",
+    "is_deprecated": False,
+    "hosting": "swe",
+    "description": "OpenAIs open model gpt-oss-120b, hosted by GDM in Sweden (ai.gdm.se).",
+    "org": "GDM",
+    "vision": False,
+    "reasoning": False,
+    "litellm_model_name": "gdm/gpt-oss-120b"
+})
+
 models["embedding_models"].append({
     "name": "multilingual-e5-large-instruct",
     "family": "e5",
