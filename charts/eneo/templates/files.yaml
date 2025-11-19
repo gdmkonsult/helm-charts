@@ -13,3 +13,5 @@ data:
 {{ .Files.Get "files/init_db.py" | indent 4 }}
   oidc.json: |
 {{ .Values.oidc | toJson | indent 4 }}
+  gdm.json: |
+{{ .Values.gdmModels | toJson | indent 4 }}

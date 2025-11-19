@@ -152,6 +152,9 @@ spec:
         - name: gdm-files
           mountPath: "/app/oidc.json"
           subPath: oidc.json
+        - name: gdm-files
+          mountPath: "/app/gdm.json"
+          subPath: gdm.json
       volumes:
       - name: data
         persistentVolumeClaim:
