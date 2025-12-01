@@ -86,13 +86,9 @@ sharedStorage:
 # Ingress configuration
 ingress:
   enabled: true
-  className: "nginx"
+  className: "traefik"
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt"
-    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
-    nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
-    nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
-    nginx.ingress.kubernetes.io/proxy-busy-buffers-size: "256k"
   # host will be set from global.domain
   tls:
     enabled: true
