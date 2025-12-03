@@ -7,7 +7,7 @@ metadata:
   labels:
     {{- include "eneo.labels" . | nindent 4 }}
   annotations:
-    traefik.ingress.kubernetes.io/router.priority: "40"
+    traefik.ingress.kubernetes.io/router.priority: "20"
     {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
