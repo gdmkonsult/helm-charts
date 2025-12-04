@@ -21,7 +21,7 @@ spec:
   backup:
     retentionPolicy: "30d"
     barmanObjectStore:
-      destinationPath: s3://k8s-ai-eneo-services/
+      destinationPath: s3://k8s-ai-eneo-services/{{ .Release.Namespace }}/{{ include "eneo.fullname" . }}-postgres/
       endpointURL: https://s3bkp.k8s.gdmcloud.se
       s3Credentials:
         accessKeyId:
