@@ -32,17 +32,39 @@ spec:
           mountPath: /app/data
         - name: tmp
           mountPath: /tmp
-      - name: model-generator
+      - name: wait-for-db
         image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
-        securityContext:
-          runAsUser: 0
-        command: ["python3", "/app/generate_models.py"]
+        command: ["python3", "/app/wait_for_db.py"]
         volumeMounts:
-        - name: data
-          mountPath: /app/data
         - name: gdm-files
-          mountPath: "/app/generate_models.py"
-          subPath: generate_models.py
+          mountPath: "/app/wait_for_db.py"
+          subPath: wait_for_db.py
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "eneo.fullname" . }}-postgres-app
+              key: username
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "eneo.fullname" . }}-postgres-app
+              key: password
+        - name: POSTGRES_HOST
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "eneo.fullname" . }}-postgres-app
+              key: host
+        - name: POSTGRES_PORT
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "eneo.fullname" . }}-postgres-app
+              key: port
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "eneo.fullname" . }}-postgres-app
+              key: dbname
         envFrom:
         - configMapRef:
             name: {{ include "eneo.fullname" . }}-config
@@ -51,10 +73,6 @@ spec:
       - name: init-db
         image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
         command: ["python3", "/app/init_db.py"]
-        volumeMounts:
-        - name: gdm-files
-          mountPath: "/app/init_db.py"
-          subPath: init_db.py
         env:
         - name: POSTGRES_USER
           valueFrom:
@@ -127,9 +145,6 @@ spec:
         volumeMounts:
         - name: data
           mountPath: /app/data
-        - name: data
-          mountPath: /app/.venv/lib/python3.11/site-packages/intric/server/dependencies/ai_models.yml
-          subPath: ai_models.yml
         - name: tmp
           mountPath: /tmp
         {{- with .Values.backend.resources }}
@@ -146,6 +161,8 @@ spec:
         - secretRef:
             name: {{ include "eneo.fullname" . }}-secrets
         volumeMounts:
+        - name: data
+          mountPath: /app/data
         - name: gdm-files
           mountPath: "/app/gdm.py"
           subPath: gdm.py

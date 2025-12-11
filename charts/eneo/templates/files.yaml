@@ -9,8 +9,8 @@ data:
 {{ .Files.Get "files/generate_models.py" | indent 4 }}
   gdm.py: |
 {{ .Files.Get "files/gdm.py" | indent 4 }}
-  init_db.py: |
-{{ .Files.Get "files/init_db.py" | indent 4 }}
+  wait_for_db.py: |
+{{ .Files.Get "files/wait_for_db.py" | indent 4 }}
   oidc.json: |
 {{ .Values.oidc | toJson | indent 4 }}
   gdm.json: |

@@ -21,6 +21,45 @@ spec:
         {{- include "eneo.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: frontend
     spec:
+      initContainers:
+      - name: wait-for-db
+        image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+        command: ["python3", "/app/wait_for_db.py"]
+        volumeMounts:
+        - name: gdm-files
+          mountPath: "/app/wait_for_db.py"
+          subPath: wait_for_db.py
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "eneo.fullname" . }}-postgres-app
+              key: username
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "eneo.fullname" . }}-postgres-app
+              key: password
+        - name: POSTGRES_HOST
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "eneo.fullname" . }}-postgres-app
+              key: host
+        - name: POSTGRES_PORT
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "eneo.fullname" . }}-postgres-app
+              key: port
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "eneo.fullname" . }}-postgres-app
+              key: dbname
+        envFrom:
+        - configMapRef:
+            name: {{ include "eneo.fullname" . }}-config
+        - secretRef:
+            name: {{ include "eneo.fullname" . }}-secrets
       containers:
       - name: frontend
         image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"
@@ -64,4 +103,8 @@ spec:
         resources:
           {{- toYaml . | nindent 10 }}
         {{- end }}
+      volumes:
+      - name: gdm-files
+        configMap:
+          name: {{ include "eneo.fullname" . }}-files
 {{- end }}
