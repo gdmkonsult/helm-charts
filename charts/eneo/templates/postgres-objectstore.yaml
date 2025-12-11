@@ -1,0 +1,19 @@
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: {{ include "eneo.fullname" . }}-backup-store
+  namespace: {{ .Release.Namespace }}
+spec:
+  retentionPolicy: 30d
+  configuration:
+    destinationPath: s3://k8s-ai-eneo-services/{{ .Release.Namespace }}/{{ include "eneo.fullname" . }}-postgres/
+    endpointURL: https://s3bkp.k8s.gdmcloud.se
+    s3Credentials:
+      accessKeyId:
+        name: {{ include "eneo.fullname" . }}-backup-secret
+        key: ACCESS_KEY
+      secretAccessKey:
+        name: {{ include "eneo.fullname" . }}-backup-secret
+        key: SECRET_KEY
+    wal:
+      compression: gzip
