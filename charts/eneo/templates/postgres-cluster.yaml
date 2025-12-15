@@ -17,9 +17,13 @@ spec:
         - CREATE EXTENSION IF NOT EXISTS vector;
   storage:
     size: {{ .Values.postgres.storage.size }}
-{{- end }}
+  {{- if .Values.postgres.resources }}
+  resources:
+    {{- toYaml .Values.postgres.resources | nindent 4 }}
+  {{- end }}
   plugins:
   - name: barman-cloud.cloudnative-pg.io
     isWALArchiver: true
     parameters:
       barmanObjectName: {{ include "eneo.fullname" . }}-backup-store
+{{- end }}

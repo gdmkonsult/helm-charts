@@ -14,7 +14,13 @@ backend:
     type: ClusterIP
     port: 8000
     targetPort: 8000
-  resources: {}
+  resources:
+    limits:
+      cpu: "2"
+      memory: 2Gi
+    requests:
+      cpu: "500m"
+      memory: 512Mi
 
 # Frontend configuration
 frontend:
@@ -28,17 +34,29 @@ frontend:
     type: ClusterIP
     port: 3000
     targetPort: 3000
-  resources: {}
+  resources:
+    limits:
+      cpu: "2"
+      memory: 2Gi
+    requests:
+      cpu: "250m"
+      memory: 256Mi
 
 # Worker configuration
 worker:
   enabled: true
-  replicaCount: 2
+  replicaCount: 1
   image:
     repository: ghcr.io/eneo-ai/eneo-backend
     tag: "1.5.1"
     pullPolicy: IfNotPresent
-  resources: {}
+  resources:
+    limits:
+      cpu: "2"
+      memory: 2Gi
+    requests:
+      cpu: "500m"
+      memory: 512Mi
 
 # Redis configuration
 redis:
@@ -56,6 +74,13 @@ redis:
     enabled: true
     size: 10Gi
     storageClass: ""
+  resources:
+    limits:
+      cpu: "2"
+      memory: 2Gi
+    requests:
+      cpu: "100m"
+      memory: 128Mi
 
 # PostgreSQL configuration (using CloudNativePG operator)
 postgres:
@@ -67,6 +92,13 @@ postgres:
   owner: eneo
   storage:
     size: 50Gi
+  resources:
+    limits:
+      cpu: "2"
+      memory: 2Gi
+    requests:
+      cpu: "500m"
+      memory: 512Mi
 
 # Shared storage configuration
 sharedStorage:
