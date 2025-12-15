@@ -1,5 +1,4 @@
-{{- if .Values.sharedStorage.data.enabled -}}
----
+{{- if .Values.sharedStorage.data.enabled }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -19,7 +18,7 @@ spec:
     requests:
       storage: {{ .Values.sharedStorage.data.size }}
 {{- end }}
-{{- if .Values.sharedStorage.tmp.enabled -}}
+{{- if .Values.sharedStorage.tmp.enabled }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
