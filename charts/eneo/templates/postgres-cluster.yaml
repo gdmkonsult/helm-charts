@@ -9,6 +9,7 @@ metadata:
 spec:
   imageName: {{ .Values.postgres.imageName }}
   instances: {{ .Values.postgres.instances }}
+  enablePDB: {{ if eq (int .Values.postgres.instances) 1 }}false{{ else }}true{{ end }}
   bootstrap:
     initdb:
       database: {{ .Values.postgres.database }}
