@@ -111,6 +111,14 @@ spec:
         ports:
         - containerPort: {{ .Values.backend.service.targetPort }}
           name: http
+        livenessProbe:
+          httpGet:
+            path: /api/healthz
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
         env:
         - name: POSTGRES_USER
           valueFrom:
