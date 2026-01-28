@@ -28,6 +28,15 @@ spec:
         ports:
         - containerPort: {{ .Values.redis.service.targetPort }}
           name: redis
+        livenessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
         {{- if .Values.redis.persistence.enabled }}
         volumeMounts:
         - name: redis-storage
