@@ -9,6 +9,8 @@ metadata:
     app.kubernetes.io/component: redis
 spec:
   replicas: {{ .Values.redis.replicaCount }}
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       {{- include "eneo.selectorLabels" . | nindent 6 }}
