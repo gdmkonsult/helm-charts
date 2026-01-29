@@ -6,8 +6,8 @@ metadata:
 spec:
   retentionPolicy: 30d
   configuration:
-    destinationPath: s3://k8s-ai-eneo-services/{{ .Release.Namespace }}
-    endpointURL: https://s3bkp.k8s.gdmcloud.se
+    destinationPath: s3://gdm-rke2-ai-services-eneo/{{ .Release.Namespace }}/postgres
+    endpointURL: https://rustfs.k8s.gdmcloud.se
     s3Credentials:
       accessKeyId:
         name: {{ include "eneo.fullname" . }}-backup-secret
