@@ -5,6 +5,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   schedule: "0 0 0 * * *"
+  immediate: true
   backupOwnerReference: self
   cluster:
     name: {{ include "eneo.fullname" . }}-postgres
