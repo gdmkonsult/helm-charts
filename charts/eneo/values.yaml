@@ -19,7 +19,7 @@ backend:
       cpu: "2"
       memory: 2Gi
     requests:
-      cpu: "500m"
+      cpu: "100m"
       memory: 512Mi
 
 # Frontend configuration
@@ -39,7 +39,7 @@ frontend:
       cpu: "2"
       memory: 2Gi
     requests:
-      cpu: "250m"
+      cpu: "100m"
       memory: 256Mi
 
 # Worker configuration
@@ -55,7 +55,7 @@ worker:
       cpu: "2"
       memory: 2Gi
     requests:
-      cpu: "500m"
+      cpu: "100m"
       memory: 512Mi
 
 # Redis configuration
@@ -97,7 +97,7 @@ postgres:
       cpu: "2"
       memory: 2Gi
     requests:
-      cpu: "500m"
+      cpu: "100m"
       memory: 512Mi
 
 # Shared storage configuration
