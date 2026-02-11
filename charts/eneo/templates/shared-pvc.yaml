@@ -11,7 +11,9 @@ metadata:
 spec:
   accessModes:
     {{- toYaml .Values.sharedStorage.data.accessModes | nindent 4 }}
-  {{- if .Values.sharedStorage.data.storageClass }}
+  {{- if .Values.global.testCluster }}
+  storageClassName: nai-nfs-storage
+  {{- else if .Values.sharedStorage.data.storageClass }}
   storageClassName: {{ .Values.sharedStorage.data.storageClass }}
   {{- end }}
   resources:
@@ -32,7 +34,9 @@ metadata:
 spec:
   accessModes:
     {{- toYaml .Values.sharedStorage.tmp.accessModes | nindent 4 }}
-  {{- if .Values.sharedStorage.tmp.storageClass }}
+  {{- if .Values.global.testCluster }}
+  storageClassName: nai-nfs-storage
+  {{- else if .Values.sharedStorage.tmp.storageClass }}
   storageClassName: {{ .Values.sharedStorage.tmp.storageClass }}
   {{- end }}
   resources:
