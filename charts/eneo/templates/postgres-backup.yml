@@ -1,3 +1,4 @@
+{{- if not .Values.global.testCluster }}
 apiVersion: postgresql.cnpg.io/v1
 kind: ScheduledBackup
 metadata:
@@ -12,3 +13,4 @@ spec:
   method: plugin
   pluginConfiguration:
     name: barman-cloud.cloudnative-pg.io
+{{- end }}
