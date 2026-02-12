@@ -256,6 +256,6 @@ if __name__ == "__main__":
     provider = ensure_model_provider(access_token, provider_config)
     ensure_completion_models(access_token, provider["id"], completion_models)
     ensure_embedding_models(access_token, provider["id"], embedding_models)
-    #ensure_transcription_models(access_token, provider["id"], transcription_models)
+    ensure_transcription_models(access_token, provider["id"], transcription_models)
     while True:
         time.sleep(86400)  # Sleep for 24 hours at a time
