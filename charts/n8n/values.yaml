@@ -3,10 +3,10 @@ global:
   domain:
   testCluster: false
 
-# Size profile: starter, medium, large
+# Size profile: standard, premium, premium-plus
 # Sets default resources, replicas, executionsMode, dbPoolSize, and postgres tuning.
 # Individual values below override profile defaults when explicitly set.
-size: "starter"
+size: "standard"
 
 # Shared image settings for n8n components (main, runner, worker)
 # Can be overridden per component via main.image.*, runner.image.*, worker.image.*
@@ -42,7 +42,7 @@ runner:
 
 # Worker configuration (only used when executionsMode is "queue")
 worker:
-  # replicaCount: override profile default (starter=0, medium=2, large=4)
+  # replicaCount: override profile default (standard=0, premium=2, premium-plus=4)
   image:
     repository: ""
     tag: ""
@@ -70,7 +70,7 @@ postgres:
   enabled: true
   operatorManaged: true
   imageName: ghcr.io/cloudnative-pg/postgresql:18
-  # instances: override profile default (starter=1, medium=1, large=3)
+  # instances: override profile default (standard=1, premium=1, premium-plus=3)
   database: n8n
   owner: n8n
   storage:
@@ -103,12 +103,12 @@ config:
   logFormat: "json"
   payloadSizeMax: "512"
   defaultBinaryDataMode: "database"
-  # dbPoolSize: override profile default (starter=10, medium=20, large=50)
+  # dbPoolSize: override profile default (standard=10, premium=20, premium-plus=50)
   executionsPruning:
     enabled: true
     maxAge: "720"   # hours (30 days)
     maxCount: "50000"
-  # executionsMode: override profile default (starter=regular, medium/large=queue)
+  # executionsMode: override profile default (standard=regular, premium/premium-plus=queue)
   runners:
     enabled: true
     mode: "external"
@@ -118,6 +118,9 @@ config:
 secrets:
   encryptionKey: ""
   runnerToken: ""
+  # Initial owner account (created on first startup if set)
+  adminEmail: ""
+  adminPassword: ""
 
 imagePullSecrets: []
 nameOverride: ""

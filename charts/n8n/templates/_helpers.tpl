@@ -109,12 +109,12 @@ Resolve image repository and tag per component, falling back to shared image.*
 {{- end -}}
 
 {{/*
-Size profiles: starter, medium, large
+Size profiles: standard, premium, premium-plus
 Each profile defines defaults for resources, scaling, and config.
 Explicit values in values.yaml always override profile defaults.
 */}}
 {{- define "n8n.profiles" -}}
-starter:
+standard:
   config:
     executionsMode: "regular"
     dbPoolSize: "10"
@@ -152,7 +152,7 @@ starter:
         memory: 4Gi
       requests:
         cpu: "100m"
-        memory: 512Mi
+        memory: 1Gi
     postgresql:
       shared_buffers: "1GB"
       effective_cache_size: "3GB"
@@ -169,7 +169,7 @@ starter:
       requests:
         cpu: "100m"
         memory: 128Mi
-medium:
+premium:
   config:
     executionsMode: "queue"
     dbPoolSize: "20"
@@ -207,7 +207,7 @@ medium:
         memory: 4Gi
       requests:
         cpu: "100m"
-        memory: 512Mi
+        memory: 1Gi
     postgresql:
       shared_buffers: "1GB"
       effective_cache_size: "3GB"
@@ -224,7 +224,7 @@ medium:
       requests:
         cpu: "100m"
         memory: 128Mi
-large:
+premium-plus:
   config:
     executionsMode: "queue"
     dbPoolSize: "50"
@@ -262,7 +262,7 @@ large:
         memory: 4Gi
       requests:
         cpu: "100m"
-        memory: 512Mi
+        memory: 1Gi
     postgresql:
       shared_buffers: "1GB"
       effective_cache_size: "3GB"
@@ -286,9 +286,9 @@ Get the active size profile
 */}}
 {{- define "n8n.profile" -}}
 {{- $profiles := include "n8n.profiles" . | fromYaml -}}
-{{- $size := .Values.size | default "starter" -}}
+{{- $size := .Values.size | default "standard" -}}
 {{- if not (hasKey $profiles $size) -}}
-{{- fail (printf "Invalid size '%s'. Must be one of: starter, medium, large" $size) -}}
+{{- fail (printf "Invalid size '%s'. Must be one of: standard, premium, premium-plus" $size) -}}
 {{- end -}}
 {{- index $profiles $size | toYaml -}}
 {{- end -}}

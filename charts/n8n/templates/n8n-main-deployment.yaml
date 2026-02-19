@@ -108,6 +108,18 @@ spec:
                   name: {{ include "n8n.fullname" . }}-secrets
                   key: N8N_RUNNERS_AUTH_TOKEN
             {{- end }}
+            {{- if and .Values.secrets.adminEmail .Values.secrets.adminPassword }}
+            - name: N8N_DEFAULT_USER_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "n8n.fullname" . }}-secrets
+                  key: N8N_DEFAULT_USER_EMAIL
+            - name: N8N_DEFAULT_USER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "n8n.fullname" . }}-secrets
+                  key: N8N_DEFAULT_USER_PASSWORD
+            {{- end }}
             {{- with .Values.main.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
