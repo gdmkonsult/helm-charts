@@ -29,6 +29,30 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      initContainers:
+        - name: wait-for-db
+          image: busybox:1.37
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for PostgreSQL at $DB_HOST:5432..."
+              attempts=0
+              max_attempts=60
+              while [ $attempts -lt $max_attempts ]; do
+                if nc -z "$DB_HOST" 5432 2>/dev/null; then
+                  echo "PostgreSQL is ready!"
+                  exit 0
+                fi
+                attempts=$((attempts + 1))
+                echo "Attempt $attempts/$max_attempts - waiting..."
+                sleep 2
+              done
+              echo "ERROR: PostgreSQL did not become ready in time"
+              exit 1
+          env:
+            - name: DB_HOST
+              value: {{ include "n8n.fullname" . }}-postgres-rw.{{ .Release.Namespace }}.svc.cluster.local
       containers:
         - name: n8n-main
           image: {{ include "n8n.mainImage" . }}
