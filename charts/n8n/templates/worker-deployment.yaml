@@ -1,0 +1,140 @@
+{{- $profile := include "n8n.profile" . | fromYaml -}}
+{{- if eq (.Values.config.executionsMode | default $profile.config.executionsMode) "queue" -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "n8n.fullname" . }}-worker
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "n8n.labels" . | nindent 4 }}
+    app.kubernetes.io/component: worker
+  annotations:
+    reloader.stakater.com/auto: "true"
+spec:
+  replicas: {{ .Values.worker.replicaCount | default $profile.worker.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "n8n.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: worker
+  template:
+    metadata:
+      labels:
+        {{- include "n8n.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: worker
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: n8n-worker
+          image: {{ include "n8n.workerImage" . }}
+          imagePullPolicy: {{ .Values.main.image.pullPolicy }}
+          args:
+            - worker
+          env:
+            - name: TZ
+              value: {{ .Values.config.timezone | quote }}
+            - name: GENERIC_TIMEZONE
+              value: {{ .Values.config.timezone | quote }}
+            - name: NODE_OPTIONS
+              value: {{ .Values.config.nodeOptions | quote }}
+            - name: NODE_FUNCTION_ALLOW_EXTERNAL
+              value: {{ .Values.config.nodeFunctionAllowExternal | quote }}
+            - name: N8N_LOG_FORMAT
+              value: {{ .Values.config.logFormat | quote }}
+            - name: DB_TYPE
+              value: postgresdb
+            - name: DB_POSTGRESDB_HOST
+              value: {{ include "n8n.fullname" . }}-postgres-rw.{{ .Release.Namespace }}.svc.cluster.local
+            - name: DB_POSTGRESDB_PORT
+              value: "5432"
+            - name: DB_POSTGRESDB_DATABASE
+              value: {{ .Values.postgres.database | quote }}
+            - name: DB_POSTGRESDB_POOL_SIZE
+              value: {{ .Values.config.dbPoolSize | default $profile.config.dbPoolSize | quote }}
+            - name: DB_POSTGRESDB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "n8n.fullname" . }}-postgres-app
+                  key: username
+            - name: DB_POSTGRESDB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "n8n.fullname" . }}-postgres-app
+                  key: password
+            - name: N8N_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "n8n.fullname" . }}-secrets
+                  key: N8N_ENCRYPTION_KEY
+            - name: N8N_DEFAULT_BINARY_DATA_MODE
+              value: {{ .Values.config.defaultBinaryDataMode | quote }}
+            {{- if .Values.config.executionsPruning.enabled }}
+            - name: EXECUTIONS_DATA_PRUNE
+              value: "true"
+            - name: EXECUTIONS_DATA_MAX_AGE
+              value: {{ .Values.config.executionsPruning.maxAge | quote }}
+            - name: EXECUTIONS_DATA_PRUNE_MAX_COUNT
+              value: {{ .Values.config.executionsPruning.maxCount | quote }}
+            {{- end }}
+            - name: EXECUTIONS_MODE
+              value: "queue"
+            - name: QUEUE_BULL_REDIS_HOST
+              value: {{ include "n8n.fullname" . }}-redis
+            - name: QUEUE_BULL_REDIS_PORT
+              value: {{ .Values.redis.service.port | quote }}
+            {{- if .Values.config.runners.enabled }}
+            - name: N8N_RUNNERS_ENABLED
+              value: "true"
+            - name: N8N_RUNNERS_MODE
+              value: {{ .Values.config.runners.mode | quote }}
+            - name: N8N_RUNNERS_BROKER_LISTEN_ADDRESS
+              value: {{ .Values.config.runners.brokerListenAddress | quote }}
+            - name: N8N_RUNNERS_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "n8n.fullname" . }}-secrets
+                  key: N8N_RUNNERS_AUTH_TOKEN
+            {{- end }}
+            {{- with .Values.worker.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          resources:
+            {{- toYaml (.Values.worker.resources | default $profile.worker.resources) | nindent 12 }}
+        {{- if and .Values.runner.enabled .Values.config.runners.enabled }}
+        - name: n8n-runner
+          image: {{ include "n8n.runnerImage" . }}
+          imagePullPolicy: {{ .Values.runner.image.pullPolicy }}
+          env:
+            - name: TZ
+              value: {{ .Values.config.timezone | quote }}
+            - name: GENERIC_TIMEZONE
+              value: {{ .Values.config.timezone | quote }}
+            - name: N8N_RUNNERS_TASK_BROKER_URI
+              value: http://localhost:5679
+            - name: N8N_RUNNERS_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "n8n.fullname" . }}-secrets
+                  key: N8N_RUNNERS_AUTH_TOKEN
+            {{- with .Values.runner.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          resources:
+            {{- toYaml (.Values.runner.resources | default $profile.runner.resources) | nindent 12 }}
+        {{- end }}
+      restartPolicy: Always
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

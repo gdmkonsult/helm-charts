@@ -1,0 +1,20 @@
+{{- if .Values.main.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "n8n.fullname" . }}-main
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "n8n.labels" . | nindent 4 }}
+    app.kubernetes.io/component: main
+spec:
+  type: {{ .Values.main.service.type }}
+  selector:
+    {{- include "n8n.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: main
+  ports:
+    - port: {{ .Values.main.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+{{- end }}

@@ -1,0 +1,21 @@
+{{- if and .Values.postgres.enabled .Values.postgres.backup.enabled (not .Values.global.testCluster) -}}
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: {{ include "n8n.fullname" . }}-backup-store
+  namespace: {{ .Release.Namespace }}
+spec:
+  retentionPolicy: {{ .Values.postgres.backup.retentionPolicy }}
+  configuration:
+    destinationPath: {{ .Values.postgres.backup.destinationPath }}/{{ .Release.Namespace }}/postgres
+    endpointURL: {{ .Values.postgres.backup.endpointURL }}
+    s3Credentials:
+      accessKeyId:
+        name: {{ include "n8n.fullname" . }}-backup-secret
+        key: ACCESS_KEY
+      secretAccessKey:
+        name: {{ include "n8n.fullname" . }}-backup-secret
+        key: SECRET_KEY
+    wal:
+      compression: gzip
+{{- end }}

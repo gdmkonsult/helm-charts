@@ -1,0 +1,33 @@
+{{- if and .Values.postgres.enabled .Values.postgres.operatorManaged -}}
+{{- $profile := include "n8n.profile" . | fromYaml -}}
+{{- $pgInstances := .Values.postgres.instances | default $profile.postgres.instances -}}
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: {{ include "n8n.fullname" . }}-postgres
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "n8n.labels" . | nindent 4 }}
+spec:
+  imageName: {{ .Values.postgres.imageName }}
+  instances: {{ $pgInstances }}
+  enablePDB: {{ if eq (int $pgInstances) 1 }}false{{ else }}true{{ end }}
+  bootstrap:
+    initdb:
+      database: {{ .Values.postgres.database }}
+      owner: {{ .Values.postgres.owner }}
+  storage:
+    size: {{ .Values.postgres.storage.size }}
+  postgresql:
+    parameters:
+      {{- toYaml (.Values.postgres.postgresql | default $profile.postgres.postgresql) | nindent 6 }}
+  resources:
+    {{- toYaml (.Values.postgres.resources | default $profile.postgres.resources) | nindent 4 }}
+  {{- if and .Values.postgres.backup.enabled (not .Values.global.testCluster) }}
+  plugins:
+  - name: barman-cloud.cloudnative-pg.io
+    isWALArchiver: true
+    parameters:
+      barmanObjectName: {{ include "n8n.fullname" . }}-backup-store
+  {{- end }}
+{{- end }}

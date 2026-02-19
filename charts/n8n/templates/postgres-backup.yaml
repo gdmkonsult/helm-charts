@@ -1,0 +1,16 @@
+{{- if and .Values.postgres.enabled .Values.postgres.backup.enabled (not .Values.global.testCluster) -}}
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: {{ include "n8n.fullname" . }}-postgres-backup
+  namespace: {{ .Release.Namespace }}
+spec:
+  schedule: {{ .Values.postgres.backup.schedule | quote }}
+  immediate: true
+  backupOwnerReference: self
+  cluster:
+    name: {{ include "n8n.fullname" . }}-postgres
+  method: plugin
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io
+{{- end }}

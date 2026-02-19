@@ -1,0 +1,307 @@
+{{- if .Values.networkPolicy.enabled -}}
+# Default deny all ingress and egress, then allow:
+# - Traffic between chart pods
+# - DNS egress (CoreDNS)
+# - Ingress from ingress controller (traefik)
+# - Egress to internet (exclude RFC1918 private ranges)
+apiVersion: crd.antrea.io/v1beta1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "n8n.fullname" . }}-default-deny
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "n8n.labels" . | nindent 4 }}
+spec:
+  priority: 100
+  tier: application
+  appliedTo:
+    - podSelector:
+        matchLabels:
+          {{- include "n8n.selectorLabels" . | nindent 10 }}
+  ingress:
+    - action: Drop
+  egress:
+    - action: Drop
+---
+apiVersion: crd.antrea.io/v1beta1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "n8n.fullname" . }}-allow-intra-chart
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "n8n.labels" . | nindent 4 }}
+spec:
+  priority: 10
+  tier: application
+  appliedTo:
+    - podSelector:
+        matchLabels:
+          {{- include "n8n.selectorLabels" . | nindent 10 }}
+  ingress:
+    - action: Allow
+      from:
+        - podSelector:
+            matchLabels:
+              {{- include "n8n.selectorLabels" . | nindent 14 }}
+  egress:
+    - action: Allow
+      to:
+        - podSelector:
+            matchLabels:
+              {{- include "n8n.selectorLabels" . | nindent 14 }}
+---
+apiVersion: crd.antrea.io/v1beta1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "n8n.fullname" . }}-allow-dns
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "n8n.labels" . | nindent 4 }}
+spec:
+  priority: 5
+  tier: application
+  appliedTo:
+    - podSelector:
+        matchLabels:
+          {{- include "n8n.selectorLabels" . | nindent 10 }}
+  egress:
+    - action: Allow
+      to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.networkPolicy.dnsNamespace }}
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: crd.antrea.io/v1beta1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "n8n.fullname" . }}-allow-ingress-controller
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "n8n.labels" . | nindent 4 }}
+spec:
+  priority: 10
+  tier: application
+  appliedTo:
+    - podSelector:
+        matchLabels:
+          {{- include "n8n.selectorLabels" . | nindent 10 }}
+          app.kubernetes.io/component: main
+  ingress:
+    - action: Allow
+      from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.networkPolicy.ingressNamespace }}
+---
+apiVersion: crd.antrea.io/v1beta1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "n8n.fullname" . }}-allow-egress-internet
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "n8n.labels" . | nindent 4 }}
+spec:
+  priority: 10
+  tier: application
+  appliedTo:
+    - podSelector:
+        matchLabels:
+          {{- include "n8n.selectorLabels" . | nindent 10 }}
+  egress:
+    - action: Allow
+      to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports: []
+    - action: Drop
+      to:
+        - ipBlock:
+            cidr: 10.0.0.0/8
+        - ipBlock:
+            cidr: 172.16.0.0/12
+        - ipBlock:
+            cidr: 192.168.0.0/16
+        - ipBlock:
+            cidr: 100.64.0.0/10
+{{- if and .Values.postgres.enabled .Values.postgres.operatorManaged }}
+---
+# PostgreSQL pods: default deny
+apiVersion: crd.antrea.io/v1beta1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "n8n.fullname" . }}-pg-default-deny
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "n8n.labels" . | nindent 4 }}
+spec:
+  priority: 100
+  tier: application
+  appliedTo:
+    - podSelector:
+        matchLabels:
+          cnpg.io/cluster: {{ include "n8n.fullname" . }}-postgres
+  ingress:
+    - action: Drop
+  egress:
+    - action: Drop
+---
+# PostgreSQL pods: allow ingress from n8n app pods on port 5432
+apiVersion: crd.antrea.io/v1beta1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "n8n.fullname" . }}-pg-allow-app
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "n8n.labels" . | nindent 4 }}
+spec:
+  priority: 10
+  tier: application
+  appliedTo:
+    - podSelector:
+        matchLabels:
+          cnpg.io/cluster: {{ include "n8n.fullname" . }}-postgres
+  ingress:
+    - action: Allow
+      from:
+        - podSelector:
+            matchLabels:
+              {{- include "n8n.selectorLabels" . | nindent 14 }}
+      ports:
+        - protocol: TCP
+          port: 5432
+---
+# PostgreSQL pods: allow ingress from CNPG operator
+apiVersion: crd.antrea.io/v1beta1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "n8n.fullname" . }}-pg-allow-operator
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "n8n.labels" . | nindent 4 }}
+spec:
+  priority: 10
+  tier: application
+  appliedTo:
+    - podSelector:
+        matchLabels:
+          cnpg.io/cluster: {{ include "n8n.fullname" . }}-postgres
+  ingress:
+    - action: Allow
+      from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.networkPolicy.cnpgNamespace }}
+---
+# PostgreSQL pods: allow inter-replica communication (streaming replication)
+apiVersion: crd.antrea.io/v1beta1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "n8n.fullname" . }}-pg-allow-replication
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "n8n.labels" . | nindent 4 }}
+spec:
+  priority: 10
+  tier: application
+  appliedTo:
+    - podSelector:
+        matchLabels:
+          cnpg.io/cluster: {{ include "n8n.fullname" . }}-postgres
+  ingress:
+    - action: Allow
+      from:
+        - podSelector:
+            matchLabels:
+              cnpg.io/cluster: {{ include "n8n.fullname" . }}-postgres
+      ports:
+        - protocol: TCP
+          port: 5432
+  egress:
+    - action: Allow
+      to:
+        - podSelector:
+            matchLabels:
+              cnpg.io/cluster: {{ include "n8n.fullname" . }}-postgres
+      ports:
+        - protocol: TCP
+          port: 5432
+---
+# PostgreSQL pods: allow DNS egress
+apiVersion: crd.antrea.io/v1beta1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "n8n.fullname" . }}-pg-allow-dns
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "n8n.labels" . | nindent 4 }}
+spec:
+  priority: 5
+  tier: application
+  appliedTo:
+    - podSelector:
+        matchLabels:
+          cnpg.io/cluster: {{ include "n8n.fullname" . }}-postgres
+  egress:
+    - action: Allow
+      to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.networkPolicy.dnsNamespace }}
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+{{- if .Values.postgres.backup.enabled }}
+---
+# PostgreSQL pods: allow egress to backup endpoint (HTTPS)
+apiVersion: crd.antrea.io/v1beta1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "n8n.fullname" . }}-pg-allow-backup
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "n8n.labels" . | nindent 4 }}
+spec:
+  priority: 10
+  tier: application
+  appliedTo:
+    - podSelector:
+        matchLabels:
+          cnpg.io/cluster: {{ include "n8n.fullname" . }}-postgres
+  egress:
+    - action: Allow
+      ports:
+        - protocol: TCP
+          port: 443
+{{- end }}
+{{- if .Values.postgres.monitoring.enabled }}
+---
+# PostgreSQL pods: allow monitoring scrape (metrics exporter)
+apiVersion: crd.antrea.io/v1beta1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "n8n.fullname" . }}-pg-allow-monitoring
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "n8n.labels" . | nindent 4 }}
+spec:
+  priority: 10
+  tier: application
+  appliedTo:
+    - podSelector:
+        matchLabels:
+          cnpg.io/cluster: {{ include "n8n.fullname" . }}-postgres
+  ingress:
+    - action: Allow
+      ports:
+        - protocol: TCP
+          port: 9187
+{{- end }}
+{{- end }}
+{{- end }}

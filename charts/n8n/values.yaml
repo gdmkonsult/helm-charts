@@ -1,0 +1,137 @@
+# Global settings
+global:
+  domain:
+  testCluster: false
+
+# Size profile: starter, medium, large
+# Sets default resources, replicas, executionsMode, dbPoolSize, and postgres tuning.
+# Individual values below override profile defaults when explicitly set.
+size: "starter"
+
+# Shared image settings for n8n components (main, runner, worker)
+# Can be overridden per component via main.image.*, runner.image.*, worker.image.*
+image:
+  repository: n8nio/n8n
+  tag: "2.8.3"
+
+# n8n main instance configuration
+main:
+  enabled: true
+  # replicaCount: override profile default
+  image:
+    repository: ""
+    tag: ""
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 5678
+    targetPort: 5678
+  # resources: override profile default (remove to use profile)
+  extraEnv: []
+
+# n8n task runner configuration
+runner:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: n8nio/runners
+    tag: ""
+    pullPolicy: IfNotPresent
+  # resources: override profile default (remove to use profile)
+  extraEnv: []
+
+# Worker configuration (only used when executionsMode is "queue")
+worker:
+  # replicaCount: override profile default (starter=0, medium=2, large=4)
+  image:
+    repository: ""
+    tag: ""
+  # resources: override profile default (remove to use profile)
+  extraEnv: []
+
+# Redis configuration (required for queue mode)
+redis:
+  image:
+    repository: redis
+    tag: "7-alpine"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 6379
+    targetPort: 6379
+  persistence:
+    enabled: true
+    size: 5Gi
+    storageClass: ""
+  # resources: override profile default (remove to use profile)
+
+# PostgreSQL configuration (using CloudNativePG operator)
+postgres:
+  enabled: true
+  operatorManaged: true
+  imageName: ghcr.io/cloudnative-pg/postgresql:18
+  # instances: override profile default (starter=1, medium=1, large=3)
+  database: n8n
+  owner: n8n
+  storage:
+    size: 60Gi
+  # resources: override profile default (remove to use profile)
+  backup:
+    enabled: true
+    schedule: "0 30 1 * * *"
+    retentionPolicy: "30d"
+    destinationPath: "s3://gdm-rke2-ai-services-n8n"
+    endpointURL: "https://rustfs.k8s.gdmcloud.se"
+  # postgresql: override profile default (remove to use profile)
+  monitoring:
+    enabled: true
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: "traefik"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt"
+  tls:
+    enabled: true
+
+# n8n configuration
+config:
+  timezone: "Europe/Stockholm"
+  nodeOptions: "--max-old-space-size=8196"
+  nodeFunctionAllowExternal: "*"
+  logFormat: "json"
+  payloadSizeMax: "512"
+  defaultBinaryDataMode: "database"
+  # dbPoolSize: override profile default (starter=10, medium=20, large=50)
+  executionsPruning:
+    enabled: true
+    maxAge: "720"   # hours (30 days)
+    maxCount: "50000"
+  # executionsMode: override profile default (starter=regular, medium/large=queue)
+  runners:
+    enabled: true
+    mode: "external"
+    brokerListenAddress: "127.0.0.1"
+
+# Secrets configuration
+secrets:
+  encryptionKey: ""
+  runnerToken: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Network policy configuration
+networkPolicy:
+  enabled: true
+  # Namespace where the ingress controller runs
+  ingressNamespace: "kube-system"
+  # Namespace where CoreDNS runs
+  dnsNamespace: "kube-system"
+  # Namespace where the CNPG operator runs
+  cnpgNamespace: "cnpg-system"
