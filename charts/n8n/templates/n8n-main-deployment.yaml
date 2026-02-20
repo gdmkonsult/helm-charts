@@ -118,6 +118,8 @@ spec:
               value: {{ include "n8n.fullname" . }}-redis
             - name: QUEUE_BULL_REDIS_PORT
               value: {{ .Values.redis.service.port | quote }}
+            - name: OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS
+              value: "true"
             {{- end }}
             {{- if .Values.config.runners.enabled }}
             - name: N8N_RUNNERS_ENABLED
