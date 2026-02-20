@@ -40,19 +40,33 @@ def wait_for_health():
 def check_setup_needed():
     """Check /rest/settings to see if first-run setup is required."""
     url = f"{N8N_URL}/rest/settings"
-    try:
-        req = urllib.request.Request(url)
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            data = json.loads(resp.read().decode())
-            show_setup = (
-                data.get("data", {})
-                .get("userManagement", {})
-                .get("showSetupOnFirstLoad", False)
-            )
-            return show_setup
-    except Exception as e:
-        print(f"SETUP: Could not fetch settings: {e}")
-        return False
+    for attempt in range(1, 31):
+        try:
+            req = urllib.request.Request(url)
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                raw = resp.read().decode()
+                if not raw.strip():
+                    print(f"SETUP: Settings returned empty response (attempt {attempt}/30), retrying...")
+                    time.sleep(3)
+                    continue
+                data = json.loads(raw)
+                show_setup = (
+                    data.get("data", {})
+                    .get("userManagement", {})
+                    .get("showSetupOnFirstLoad", False)
+                )
+                print(f"SETUP: showSetupOnFirstLoad = {show_setup}")
+                return show_setup
+        except json.JSONDecodeError as e:
+            print(f"SETUP: Settings returned invalid JSON (attempt {attempt}/30): {e}")
+            print(f"SETUP: Raw response: {raw[:500] if raw else '(empty)'}")
+            time.sleep(3)
+        except Exception as e:
+            print(f"SETUP: Could not fetch settings (attempt {attempt}/30): {e}")
+            time.sleep(3)
+
+    print("SETUP: Failed to fetch settings after 30 attempts")
+    return False
 
 
 def create_owner():
