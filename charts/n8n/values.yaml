@@ -138,3 +138,5 @@ networkPolicy:
   dnsNamespace: "kube-system"
   # Namespace where the CNPG operator runs
   cnpgNamespace: "cnpg-system"
+  # Kubernetes API server ClusterIP (kubectl get svc kubernetes -o jsonpath='{.spec.clusterIP}')
+  kubeApiServerIP: "100.64.0.1"

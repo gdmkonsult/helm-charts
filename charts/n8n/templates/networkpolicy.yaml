@@ -276,7 +276,8 @@ spec:
   egress:
     - action: Allow
       to:
-        - namespaceSelector: {}
+        - ipBlock:
+            cidr: {{ .Values.networkPolicy.kubeApiServerIP }}/32
       ports:
         - protocol: TCP
           port: 443
