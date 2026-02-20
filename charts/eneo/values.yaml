@@ -222,7 +222,6 @@ secrets:
   confluenceClientSecret: ""
   sharepointClientId: ""
   sharepointClientSecret: ""
-  sharepointWebhookClientState: ""
 
   # Legacy auth (deprecated)
   mobilityguardDiscoveryEndpoint: ""
