@@ -113,11 +113,6 @@ spec:
         matchLabels:
           {{- include "n8n.selectorLabels" . | nindent 10 }}
   egress:
-    - action: Allow
-      to:
-        - ipBlock:
-            cidr: 0.0.0.0/0
-      ports: []
     - action: Drop
       to:
         - ipBlock:
@@ -128,6 +123,10 @@ spec:
             cidr: 192.168.0.0/16
         - ipBlock:
             cidr: 100.64.0.0/10
+    - action: Allow
+      to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
 {{- if and .Values.postgres.enabled .Values.postgres.operatorManaged }}
 ---
 # PostgreSQL pods: default deny

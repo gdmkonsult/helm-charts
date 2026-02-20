@@ -187,6 +187,27 @@ spec:
           resources:
             {{- toYaml (.Values.runner.resources | default $profile.runner.resources) | nindent 12 }}
         {{- end }}
+        {{- if and .Values.secrets.adminEmail .Values.secrets.adminPassword }}
+        - name: n8n-setup
+          image: python:3.12-alpine
+          command: ["python3", "/scripts/setup.py"]
+          env:
+            - name: N8N_URL
+              value: "http://localhost:{{ .Values.main.service.targetPort }}"
+            - name: N8N_DEFAULT_USER_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "n8n.fullname" . }}-secrets
+                  key: N8N_DEFAULT_USER_EMAIL
+            - name: N8N_DEFAULT_USER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "n8n.fullname" . }}-secrets
+                  key: N8N_DEFAULT_USER_PASSWORD
+          volumeMounts:
+            - name: setup-scripts
+              mountPath: /scripts
+        {{- end }}
       restartPolicy: Always
       {{- with .Values.nodeSelector }}
       nodeSelector:
@@ -199,5 +220,12 @@ spec:
       {{- with .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if and .Values.secrets.adminEmail .Values.secrets.adminPassword }}
+      volumes:
+        - name: setup-scripts
+          configMap:
+            name: {{ include "n8n.fullname" . }}-files
+            defaultMode: 0755
       {{- end }}
 {{- end }}
