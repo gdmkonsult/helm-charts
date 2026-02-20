@@ -1,5 +1,5 @@
 charts/eneo/templates/backup-secret-sealed.yaml
 charts/eneo/.DS_Store
 charts/eneo/templates/.DS_Store
-
+charts/.DS_Store
 charts/eneo/values.test.yaml
