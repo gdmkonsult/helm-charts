@@ -259,8 +259,7 @@ spec:
           port: 53
 ---
 # PostgreSQL pods: allow egress to Kubernetes API (required by CNPG operator initdb)
-# Note: no "to" restriction because AntreaProxy DNATs the ClusterIP before
-# the egress-rule table, so the real destination is a node IP on port 6443.
+# Uses toServices to match on clusterIP+port before DNAT occurs.
 apiVersion: crd.antrea.io/v1beta1
 kind: NetworkPolicy
 metadata:
@@ -277,11 +276,9 @@ spec:
           cnpg.io/cluster: {{ include "n8n.fullname" . }}-postgres
   egress:
     - action: Allow
-      ports:
-        - protocol: TCP
-          port: 443
-        - protocol: TCP
-          port: 6443
+      toServices:
+        - name: kubernetes
+          namespace: default
 {{- if .Values.postgres.backup.enabled }}
 ---
 # PostgreSQL pods: allow egress to backup endpoint (HTTPS)
