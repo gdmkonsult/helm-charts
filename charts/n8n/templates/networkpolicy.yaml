@@ -276,11 +276,23 @@ spec:
   egress:
     - action: Allow
       to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: default
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 6443
+    - action: Allow
+      to:
         - ipBlock:
             cidr: {{ .Values.networkPolicy.kubeApiServerIP }}/32
       ports:
         - protocol: TCP
           port: 443
+        - protocol: TCP
+          port: 6443
 {{- if .Values.postgres.backup.enabled }}
 ---
 # PostgreSQL pods: allow egress to backup endpoint (HTTPS)
