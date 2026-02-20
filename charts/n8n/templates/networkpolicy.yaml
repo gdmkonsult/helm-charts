@@ -98,6 +98,31 @@ spec:
             matchLabels:
               kubernetes.io/metadata.name: {{ .Values.networkPolicy.ingressNamespace }}
 ---
+# App pods: allow egress to PostgreSQL pods on port 5432
+apiVersion: crd.antrea.io/v1beta1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "n8n.fullname" . }}-allow-egress-postgres
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "n8n.labels" . | nindent 4 }}
+spec:
+  priority: 10
+  tier: application
+  appliedTo:
+    - podSelector:
+        matchLabels:
+          {{- include "n8n.selectorLabels" . | nindent 10 }}
+  egress:
+    - action: Allow
+      to:
+        - podSelector:
+            matchLabels:
+              cnpg.io/cluster: {{ include "n8n.fullname" . }}-postgres
+      ports:
+        - protocol: TCP
+          port: 5432
+---
 apiVersion: crd.antrea.io/v1beta1
 kind: NetworkPolicy
 metadata:
