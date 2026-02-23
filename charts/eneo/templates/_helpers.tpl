@@ -69,7 +69,7 @@ Generate JWT secret if not set, but preserve existing value on upgrade
 {{- define "eneo.generateJwtSecret" -}}
 {{- $secretName := printf "%s-secrets" (include "eneo.fullname" .context) -}}
 {{- $secret := lookup "v1" "Secret" .context.Release.Namespace $secretName -}}
-{{- if $secret -}}
+{{- if and $secret (hasKey $secret.data "JWT_SECRET") -}}
 {{- index $secret.data "JWT_SECRET" | b64dec -}}
 {{- else if .value -}}
 {{ .value }}
@@ -84,7 +84,7 @@ Generate URL signing key if not set, but preserve existing value on upgrade
 {{- define "eneo.generateUrlSigningKey" -}}
 {{- $secretName := printf "%s-secrets" (include "eneo.fullname" .context) -}}
 {{- $secret := lookup "v1" "Secret" .context.Release.Namespace $secretName -}}
-{{- if $secret -}}
+{{- if and $secret (hasKey $secret.data "URL_SIGNING_KEY") -}}
 {{- index $secret.data "URL_SIGNING_KEY" | b64dec -}}
 {{- else if .value -}}
 {{ .value }}
@@ -99,7 +99,7 @@ Generate encryption key if not set, but preserve existing value on upgrade
 {{- define "eneo.generateEncryptionKey" -}}
 {{- $secretName := printf "%s-secrets" (include "eneo.fullname" .context) -}}
 {{- $secret := lookup "v1" "Secret" .context.Release.Namespace $secretName -}}
-{{- if $secret -}}
+{{- if and $secret (hasKey $secret.data "ENCRYPTION_KEY") -}}
 {{- index $secret.data "ENCRYPTION_KEY" | b64dec -}}
 {{- else if .value -}}
 {{ .value }}
@@ -114,7 +114,7 @@ Generate SHAREPOINT_WEBHOOK_CLIENT_STATE if not set, but preserve existing value
 {{- define "eneo.generateSharepointWebhookClientState" -}}
 {{- $secretName := printf "%s-secrets" (include "eneo.fullname" .context) -}}
 {{- $secret := lookup "v1" "Secret" .context.Release.Namespace $secretName -}}
-{{- if $secret -}}
+{{- if and $secret (hasKey $secret.data "SHAREPOINT_WEBHOOK_CLIENT_STATE") -}}
 {{- index $secret.data "SHAREPOINT_WEBHOOK_CLIENT_STATE" | b64dec -}}
 {{- else if .value -}}
 {{ .value }}
@@ -129,7 +129,7 @@ Generate INTRIC_SUPER_API_KEY if not set, but preserve existing value on upgrade
 {{- define "eneo.generateIntricSuperApiKey" -}}
 {{- $secretName := printf "%s-secrets" (include "eneo.fullname" .context) -}}
 {{- $secret := lookup "v1" "Secret" .context.Release.Namespace $secretName -}}
-{{- if $secret -}}
+{{- if and $secret (hasKey $secret.data "INTRIC_SUPER_API_KEY") -}}
 {{- index $secret.data "INTRIC_SUPER_API_KEY" | b64dec -}}
 {{- else if .value -}}
 {{ .value }}
@@ -144,7 +144,7 @@ Generate INTRIC_SUPER_DUPER_API_KEY if not set, but preserve existing value on u
 {{- define "eneo.generateIntricSuperDuperApiKey" -}}
 {{- $secretName := printf "%s-secrets" (include "eneo.fullname" .context) -}}
 {{- $secret := lookup "v1" "Secret" .context.Release.Namespace $secretName -}}
-{{- if $secret -}}
+{{- if and $secret (hasKey $secret.data "INTRIC_SUPER_DUPER_API_KEY") -}}
 {{- index $secret.data "INTRIC_SUPER_DUPER_API_KEY" | b64dec -}}
 {{- else if .value -}}
 {{ .value }}
@@ -162,7 +162,7 @@ Generate DEFAULT_USER_PASSWORD if not set, but preserve existing value on upgrad
 {{- else -}}
 {{- $secretName := printf "%s-secrets" (include "eneo.fullname" .context) -}}
 {{- $secret := lookup "v1" "Secret" .context.Release.Namespace $secretName -}}
-{{- if $secret -}}
+{{- if and $secret (hasKey $secret.data "DEFAULT_USER_PASSWORD") -}}
 {{- index $secret.data "DEFAULT_USER_PASSWORD" | b64dec -}}
 {{- else -}}
 {{- $cached := .context.Release.Name | sha256sum | trunc 16 -}}
