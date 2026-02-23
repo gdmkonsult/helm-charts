@@ -109,6 +109,21 @@ Generate encryption key if not set, but preserve existing value on upgrade
 {{- end -}}
 
 {{/*
+Generate SHAREPOINT_WEBHOOK_CLIENT_STATE if not set, but preserve existing value on upgrade
+*/}}
+{{- define "eneo.generateSharepointWebhookClientState" -}}
+{{- $secretName := printf "%s-secrets" (include "eneo.fullname" .context) -}}
+{{- $secret := lookup "v1" "Secret" .context.Release.Namespace $secretName -}}
+{{- if $secret -}}
+{{- index $secret.data "SHAREPOINT_WEBHOOK_CLIENT_STATE" | b64dec -}}
+{{- else if .value -}}
+{{ .value }}
+{{- else -}}
+{{ randAlphaNum 64 }}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Generate INTRIC_SUPER_API_KEY if not set, but preserve existing value on upgrade
 */}}
 {{- define "eneo.generateIntricSuperApiKey" -}}
