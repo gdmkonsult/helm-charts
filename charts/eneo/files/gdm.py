@@ -55,7 +55,6 @@ embedding_models = [
         "name": "multilingual-e5-large-instruct",
         "display_name": "multilingual-e5-large-instruct",
         "family": "e5",
-        "dimensions": 1024,
         "max_input": 512,
         "hosting": "swe",
         "is_active": True,
