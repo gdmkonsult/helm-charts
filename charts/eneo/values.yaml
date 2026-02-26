@@ -174,6 +174,7 @@ config:
   azureApiVersion: "2024-02-15-preview"
   migrationAutoRecalcThreshold: "30"
   loglevel: "INFO"
+  litellmDropParams: "True"
 
 # Secrets configuration
 secrets:

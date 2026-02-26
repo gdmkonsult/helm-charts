@@ -48,6 +48,7 @@ data:
   AZURE_API_VERSION: {{ .Values.config.azureApiVersion | quote }}
   MIGRATION_AUTO_RECALC_THRESHOLD: {{ .Values.config.migrationAutoRecalcThreshold | quote }}
   LOGLEVEL: {{ .Values.config.loglevel | quote }}
+  LITELLM_DROP_PARAMS: {{ .Values.config.litellmDropParams | quote }}
   {{- if .Values.global.testCluster }}
   SSL_VERIFY: "False"
   TESTCLUSTER: "True"
