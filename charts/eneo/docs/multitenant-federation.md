@@ -6,12 +6,12 @@ Den här guiden beskriver hur man konfigurerar Eneo med **per-tenant federation*
 
 ## Översikt
 
-| Inställning | Utan federation | Med federation |
-|---|---|---|
-| Autentiseringskälla | Globala OIDC-miljövariabler | Per-tenant config i databasen |
-| Alla tenants delar samma IdP | Ja | Nej — varje tenant har sin egen |
-| Gamla `oidc.*`-värden | Aktiva | Ignoreras (säkert att lämna) |
-| Kräver `ENCRYPTION_KEY` | Nej | Ja (krypterar client secrets i DB) |
+| Inställning                  | Utan federation             | Med federation                     |
+| ---------------------------- | --------------------------- | ---------------------------------- |
+| Autentiseringskälla          | Globala OIDC-miljövariabler | Per-tenant config i databasen      |
+| Alla tenants delar samma IdP | Ja                          | Nej — varje tenant har sin egen    |
+| Gamla `oidc.*`-värden        | Aktiva                      | Ignoreras (säkert att lämna)       |
+| Kräver `ENCRYPTION_KEY`      | Nej                         | Ja (krypterar client secrets i DB) |
 
 ---
 
@@ -56,11 +56,11 @@ helm upgrade <release-namn> charts/eneo -f values.yaml -n <namespace>
 
 Skapa DNS-poster som pekar varje tenant-subdomän till samma ingress-IP:
 
-| Typ | Namn | Mål |
-|---|---|---|
+| Typ       | Namn                          | Mål                  |
+| --------- | ----------------------------- | -------------------- |
 | CNAME / A | `bengtsfors.eneo.example.com` | Klustrets ingress-IP |
 | CNAME / A | `fargelanda.eneo.example.com` | Klustrets ingress-IP |
-| CNAME / A | `amal.eneo.example.com` | Klustrets ingress-IP |
+| CNAME / A | `amal.eneo.example.com`       | Klustrets ingress-IP |
 
 TLS-certifikat hanteras automatiskt av cert-manager (ett cert per host).
 
@@ -124,11 +124,11 @@ Upprepa för varje tenant med korrekta värden.
 
 I varje Entra ID App Registration, lägg till redirect URI:
 
-| Tenant | Redirect URI |
-|---|---|
+| Tenant     | Redirect URI                                        |
+| ---------- | --------------------------------------------------- |
 | Bengtsfors | `https://bengtsfors.eneo.example.com/auth/callback` |
 | Färgelanda | `https://fargelanda.eneo.example.com/auth/callback` |
-| Åmål | `https://amal.eneo.example.com/auth/callback` |
+| Åmål       | `https://amal.eneo.example.com/auth/callback`       |
 
 ---
 
@@ -157,9 +157,9 @@ Respektive tenant ska omdirigera till sin egen Entra ID-inloggning.
 
 ## Felsökning
 
-| Problem | Orsak | Lösning |
-|---|---|---|
-| 404 på tenant-subdomän | DNS pekar inte rätt, eller host saknas i `extraHosts` | Kontrollera DNS och `values.yaml` |
-| TLS-fel | cert-manager har inte utfärdat cert | `kubectl get certificates -n <ns>` och kolla events |
-| OIDC redirect-fel | `canonical_public_origin` matchar inte redirect URI i Azure | Kontrollera att URL:erna är identiska |
-| Validerings-fel vid `helm upgrade` | `extraHosts` satt men `federationPerTenantEnabled` inte `"true"` | Sätt `config.federationPerTenantEnabled: "true"` |
+| Problem                            | Orsak                                                            | Lösning                                             |
+| ---------------------------------- | ---------------------------------------------------------------- | --------------------------------------------------- |
+| 404 på tenant-subdomän             | DNS pekar inte rätt, eller host saknas i `extraHosts`            | Kontrollera DNS och `values.yaml`                   |
+| TLS-fel                            | cert-manager har inte utfärdat cert                              | `kubectl get certificates -n <ns>` och kolla events |
+| OIDC redirect-fel                  | `canonical_public_origin` matchar inte redirect URI i Azure      | Kontrollera att URL:erna är identiska               |
+| Validerings-fel vid `helm upgrade` | `extraHosts` satt men `federationPerTenantEnabled` inte `"true"` | Sätt `config.federationPerTenantEnabled: "true"`    |
