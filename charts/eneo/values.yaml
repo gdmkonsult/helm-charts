@@ -126,6 +126,20 @@ ingress:
     enabled: true
     # secretName will be auto-generated
 
+# Federation / multi-tenant ingress
+# Extra hostnames for per-tenant federation subdomains.
+# Each host gets its own ingress rules (frontend + backend) with TLS.
+# Requires:
+#   - config.federationPerTenantEnabled: "true"
+#   - DNS records for each host pointing to the ingress IP
+#   - cert-manager for automatic TLS certificates
+# Example:
+#   extraHosts:
+#     - bengtsfors.eneo.example.com
+#     - fargelanda.eneo.example.com
+#     - amal.eneo.example.com
+extraHosts: []
+
 oidc:
   enabled: false
   discoveryUrl: ""
@@ -149,6 +163,9 @@ config:
   oidcRedirectGracePeriodSeconds: "600"
   strictOidcRedirectValidation: "true"
   oidcClockLeewaySeconds: "120"
+  # Per-tenant federation: when "True", each tenant uses its own IdP config
+  # from the DB. The global OIDC settings (oidc.*) become inert.
+  # Requires secrets.encryptionKey (auto-generated if empty).
   federationPerTenantEnabled: "false"
   tenantCredentialsEnabled: "true"
   usingAccessManagement: "True"
@@ -181,6 +198,8 @@ secrets:
   # Security keys - auto-generated if empty (DO NOT set in values.yaml for production)
   jwtSecret: ""
   urlSigningKey: ""
+  # Required for per-tenant federation (encrypts client secrets in DB).
+  # Auto-generated if empty.
   encryptionKey: ""
 
   # publicOrigin now derived from global.domain

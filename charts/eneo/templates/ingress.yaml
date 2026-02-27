@@ -20,6 +20,11 @@ spec:
   - hosts:
     - {{ .Values.global.domain }}
     secretName: {{ include "eneo.fullname" . }}-tls
+  {{- range .Values.extraHosts }}
+  - hosts:
+    - {{ . }}
+    secretName: {{ . | replace "." "-" }}-tls
+  {{- end }}
   {{- end }}
   rules:
   - host: {{ .Values.global.domain }}
@@ -32,4 +37,16 @@ spec:
             name: {{ include "eneo.fullname" . }}-frontend
             port:
               number: {{ .Values.frontend.service.port }}
+  {{- range .Values.extraHosts }}
+  - host: {{ . }}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ include "eneo.fullname" $ }}-frontend
+            port:
+              number: {{ $.Values.frontend.service.port }}
+  {{- end }}
 {{- end }}
