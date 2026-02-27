@@ -178,4 +178,7 @@ Validate required values
 {{- if not .Values.global.domain -}}
 {{- fail "global.domain is required. Please set it in your values.yaml or via --set global.domain=your-domain.com" -}}
 {{- end -}}
+{{- if and .Values.extraHosts (ne .Values.config.federationPerTenantEnabled "true") -}}
+{{- fail "extraHosts requires config.federationPerTenantEnabled=\"true\"" -}}
+{{- end -}}
 {{- end -}}
