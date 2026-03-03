@@ -233,8 +233,8 @@ secrets:
   # Internal services - auto-generated if empty
   intricMarketplaceApiKey: ""
   intricMarketplaceUrl: ""
-  intricSuperApiKey: ""
-  intricSuperDuperApiKey: ""
+  eneoSuperApiKey: ""
+  eneoSuperDuperApiKey: ""
 
   # OAuth Integration
   oauthCallbackUrl: ""

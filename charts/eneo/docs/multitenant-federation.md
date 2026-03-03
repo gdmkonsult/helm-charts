@@ -68,7 +68,7 @@ TLS-certifikat hanteras automatiskt av cert-manager (ett cert per host).
 
 ## Steg 3 — Skapa tenants via API
 
-Alla API-anrop nedan använder headern `X-API-Key` med värdet för `INTRIC_SUPER_API_KEY`.
+Alla API-anrop nedan använder headern `X-API-Key` med värdet för `ENEO_SUPER_API_KEY`.
 
 ### 3a. Lista befintliga tenants
 
