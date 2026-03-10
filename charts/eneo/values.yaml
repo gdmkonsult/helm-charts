@@ -114,6 +114,10 @@ sharedStorage:
     storageClass: gdm-ai-nfs
     accessModes:
       - ReadWriteMany
+    cleanup:
+      enabled: true
+      schedule: "0 2 * * *"
+      olderThanHours: 48
 
 # Ingress configuration
 ingress:

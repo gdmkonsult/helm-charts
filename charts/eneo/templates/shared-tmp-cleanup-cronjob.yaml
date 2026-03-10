@@ -1,0 +1,49 @@
+{{- if and .Values.sharedStorage.tmp.enabled .Values.sharedStorage.tmp.cleanup.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "eneo.fullname" . }}-shared-tmp-cleanup
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "eneo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: shared-tmp-cleanup
+spec:
+  schedule: {{ .Values.sharedStorage.tmp.cleanup.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            {{- include "eneo.selectorLabels" . | nindent 12 }}
+            app.kubernetes.io/component: shared-tmp-cleanup
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: cleanup
+              image: busybox:latest
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  echo "Starting cleanup of directories older than {{ .Values.sharedStorage.tmp.cleanup.olderThanHours }} hours..."
+                  find /shared-tmp -mindepth 1 -maxdepth 1 -type d -mmin +{{ mul .Values.sharedStorage.tmp.cleanup.olderThanHours 60 }} -exec rm -rf {} +
+                  echo "Cleanup complete."
+              volumeMounts:
+                - name: shared-tmp
+                  mountPath: /shared-tmp
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  cpu: 200m
+                  memory: 128Mi
+          volumes:
+            - name: shared-tmp
+              persistentVolumeClaim:
+                claimName: {{ include "eneo.fullname" . }}-shared-tmp
+{{- end }}
