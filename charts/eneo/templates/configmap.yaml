@@ -32,7 +32,7 @@ data:
   USING_IMAGE_GENERATION: {{ .Values.config.usingImageGeneration | quote }}
   USING_CRAWL: {{ .Values.config.usingCrawl | quote }}
   TESTING: {{ .Values.config.testing | quote }}
-  WORKER_MAX_CONCURRENT_JOBS: {{ .Values.config.workerMaxConcurrentJobs | quote }}
+  WORKER_MAX_JOBS: {{ .Values.config.workerMaxConcurrentJobs | quote }}
   TENANT_WORKER_CONCURRENCY_LIMIT: {{ .Values.config.tenantWorkerConcurrencyLimit | quote }}
   TENANT_WORKER_SEMAPHORE_TTL_SECONDS: {{ .Values.config.tenantWorkerSemaphoreTtlSeconds | quote }}
   TENANT_WORKER_RETRY_DELAY_SECONDS: {{ .Values.config.tenantWorkerRetryDelaySeconds | quote }}
