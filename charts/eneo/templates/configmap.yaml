@@ -42,6 +42,7 @@ data:
   TRANSCRIPTION_MAX_FILE_SIZE: {{ .Values.config.transcriptionMaxFileSize | quote }}
   MAX_IN_QUESTION: {{ .Values.config.maxInQuestion | quote }}
   CRAWL_MAX_LENGTH: {{ .Values.config.crawlMaxLength | quote }}
+  CRAWL_PAGE_BATCH_SIZE: {{ .Values.config.crawlPageBatchSize | quote }}
   CLOSESPIDER_ITEMCOUNT: {{ .Values.config.closespiderItemcount | quote }}
   OBEY_ROBOTS: {{ .Values.config.obeyRobots | quote }}
   AUTOTHROTTLE_ENABLED: {{ .Values.config.autothrottleEnabled | quote }}
