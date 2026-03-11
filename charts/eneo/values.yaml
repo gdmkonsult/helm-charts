@@ -179,7 +179,7 @@ config:
   usingCrawl: "True"
   testing: "False"
   dev: "False"
-  workerMaxConcurrentJobs: "6"
+  workerMaxConcurrentJobs: "4"
   tenantWorkerConcurrencyLimit: "4"
   tenantWorkerSemaphoreTtlSeconds: "36000"
   tenantWorkerRetryDelaySeconds: "30"
