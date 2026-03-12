@@ -194,7 +194,7 @@ config:
   transcriptionMaxFileSize: "104857600"
   maxInQuestion: "1"
   crawlMaxLength: "14400"
-  crawlPageBatchSize: "10"
+  crawlPageBatchSize: "1"
   closespiderItemcount: "20000"
   obeyRobots: "True"
   autothrottleEnabled: "True"
