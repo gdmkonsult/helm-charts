@@ -192,7 +192,7 @@ config:
   uploadImageToSessionMaxSize: "104857600"
   uploadMaxFileSize: "104857600"
   transcriptionMaxFileSize: "104857600"
-  maxInQuestion: "1"
+  maxInQuestion: "10"
   crawlMaxLength: "14400"
   crawlPageBatchSize: "1"
   closespiderItemcount: "20000"
