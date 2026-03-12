@@ -26,12 +26,13 @@ spec:
         image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
         securityContext:
           runAsUser: 0
-        command: ["sh", "-c", "chown -R 1000:1000 /app/data && chown -R 1000:1000 /tmp"]
+        command: ["sh", "-c", "chown -R 1000:1000 /app/data && chown -R 1000:1000 /app/exports"]
         volumeMounts:
         - name: data
           mountPath: /app/data
-        - name: tmp
-          mountPath: /tmp
+        - name: shared-exports
+          mountPath: /app/exports
+          subPath: exports
       - name: wait-for-db
         image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
         command: ["python3", "/app/wait_for_db.py"]
@@ -155,6 +156,9 @@ spec:
           mountPath: /app/data
         - name: tmp
           mountPath: /tmp
+        - name: shared-exports
+          mountPath: /app/exports
+          subPath: exports
         {{- with .Values.backend.resources }}
         resources:
           {{- toYaml . | nindent 10 }}
@@ -185,8 +189,10 @@ spec:
         persistentVolumeClaim:
           claimName: {{ include "eneo.fullname" . }}-shared-data
       - name: tmp
+        emptyDir: {}
+      - name: shared-exports
         persistentVolumeClaim:
-          claimName: {{ include "eneo.fullname" . }}-shared-tmp
+          claimName: {{ include "eneo.fullname" . }}-shared-data
       - name: gdm-files
         configMap:
           name: {{ include "eneo.fullname" . }}-files

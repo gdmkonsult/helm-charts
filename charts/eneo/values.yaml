@@ -113,16 +113,11 @@ sharedStorage:
     storageClass: gdm-ai-nfs
     accessModes:
       - ReadWriteMany
-  tmp:
+  # Export file cleanup (runs on shared-data PVC at /app/exports)
+  exportCleanup:
     enabled: true
-    size: 100Gi
-    storageClass: gdm-ai-nfs
-    accessModes:
-      - ReadWriteMany
-    cleanup:
-      enabled: true
-      schedule: "0 2 * * *"
-      olderThanHours: 48
+    schedule: "0 2 * * *"
+    olderThanHours: 48
 
 # Ingress configuration
 ingress:

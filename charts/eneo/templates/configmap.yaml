@@ -50,6 +50,8 @@ data:
   MIGRATION_AUTO_RECALC_THRESHOLD: {{ .Values.config.migrationAutoRecalcThreshold | quote }}
   LOGLEVEL: {{ .Values.config.loglevel | quote }}
   LITELLM_DROP_PARAMS: {{ .Values.config.litellmDropParams | quote }}
+  UPLOAD_TMP_DIR: "/tmp"
+  EXPORT_DIR: "/app/exports"
   {{- if .Values.global.testCluster }}
   SSL_VERIFY: "False"
   TESTCLUSTER: "True"

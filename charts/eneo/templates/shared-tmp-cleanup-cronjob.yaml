@@ -1,14 +1,14 @@
-{{- if and .Values.sharedStorage.tmp.enabled .Values.sharedStorage.tmp.cleanup.enabled }}
+{{- if .Values.sharedStorage.exportCleanup.enabled }}
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: {{ include "eneo.fullname" . }}-shared-tmp-cleanup
+  name: {{ include "eneo.fullname" . }}-export-cleanup
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "eneo.labels" . | nindent 4 }}
-    app.kubernetes.io/component: shared-tmp-cleanup
+    app.kubernetes.io/component: export-cleanup
 spec:
-  schedule: {{ .Values.sharedStorage.tmp.cleanup.schedule | quote }}
+  schedule: {{ .Values.sharedStorage.exportCleanup.schedule | quote }}
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3
@@ -19,7 +19,7 @@ spec:
         metadata:
           labels:
             {{- include "eneo.selectorLabels" . | nindent 12 }}
-            app.kubernetes.io/component: shared-tmp-cleanup
+            app.kubernetes.io/component: export-cleanup
         spec:
           restartPolicy: OnFailure
           containers:
@@ -29,12 +29,14 @@ spec:
                 - /bin/sh
                 - -c
                 - |
-                  echo "Starting cleanup of directories older than {{ .Values.sharedStorage.tmp.cleanup.olderThanHours }} hours..."
-                  find /shared-tmp -mindepth 1 -maxdepth 1 -type d -mmin +{{ mul .Values.sharedStorage.tmp.cleanup.olderThanHours 60 }} -exec rm -rf {} +
+                  echo "Starting cleanup of export files older than {{ .Values.sharedStorage.exportCleanup.olderThanHours }} hours..."
+                  find /app/exports -mindepth 1 -maxdepth 2 -type f -mmin +{{ mul .Values.sharedStorage.exportCleanup.olderThanHours 60 }} -delete
+                  find /app/exports -mindepth 1 -maxdepth 1 -type d -empty -delete
                   echo "Cleanup complete."
               volumeMounts:
-                - name: shared-tmp
-                  mountPath: /shared-tmp
+                - name: shared-data
+                  mountPath: /app/exports
+                  subPath: exports
               resources:
                 requests:
                   cpu: 50m
@@ -43,7 +45,7 @@ spec:
                   cpu: 200m
                   memory: 128Mi
           volumes:
-            - name: shared-tmp
+            - name: shared-data
               persistentVolumeClaim:
-                claimName: {{ include "eneo.fullname" . }}-shared-tmp
+                claimName: {{ include "eneo.fullname" . }}-shared-data
 {{- end }}

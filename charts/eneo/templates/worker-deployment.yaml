@@ -63,6 +63,9 @@ spec:
           mountPath: /app/data
         - name: tmp
           mountPath: /tmp
+        - name: shared-exports
+          mountPath: /app/exports
+          subPath: exports
         {{- with .Values.worker.resources }}
         resources:
           {{- toYaml . | nindent 10 }}
@@ -72,8 +75,10 @@ spec:
         persistentVolumeClaim:
           claimName: {{ include "eneo.fullname" . }}-shared-data
       - name: tmp
+        emptyDir: {}
+      - name: shared-exports
         persistentVolumeClaim:
-          claimName: {{ include "eneo.fullname" . }}-shared-tmp
+          claimName: {{ include "eneo.fullname" . }}-shared-data
       - name: gdm-files
         configMap:
           name: {{ include "eneo.fullname" . }}-files

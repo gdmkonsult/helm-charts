@@ -20,26 +20,3 @@ spec:
     requests:
       storage: {{ .Values.sharedStorage.data.size }}
 {{- end }}
-{{- if .Values.sharedStorage.tmp.enabled }}
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: {{ include "eneo.fullname" . }}-shared-tmp
-  namespace: {{ .Release.Namespace }}
-  labels:
-    {{- include "eneo.labels" . | nindent 4 }}
-  annotations:
-    "helm.sh/resource-policy": keep
-spec:
-  accessModes:
-    {{- toYaml .Values.sharedStorage.tmp.accessModes | nindent 4 }}
-  {{- if .Values.global.testCluster }}
-  storageClassName: nai-nfs-storage
-  {{- else if .Values.sharedStorage.tmp.storageClass }}
-  storageClassName: {{ .Values.sharedStorage.tmp.storageClass }}
-  {{- end }}
-  resources:
-    requests:
-      storage: {{ .Values.sharedStorage.tmp.size }}
-{{- end }}
