@@ -104,6 +104,8 @@ postgres:
     effective_cache_size: "1GB"
     work_mem: "4MB"
     maintenance_work_mem: "64MB"
+    autovacuum_max_workers: "1"
+    autovacuum_work_mem: "32MB"
 
 # Shared storage configuration
 sharedStorage:
