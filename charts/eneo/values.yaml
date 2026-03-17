@@ -100,7 +100,7 @@ postgres:
       cpu: "100m"
       memory: 512Mi
   parameters:
-    shared_buffers: "256MB"
+    shared_buffers: "128MB"
     effective_cache_size: "1GB"
     work_mem: "4MB"
     maintenance_work_mem: "64MB"
