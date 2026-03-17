@@ -50,6 +50,9 @@ data:
   MIGRATION_AUTO_RECALC_THRESHOLD: {{ .Values.config.migrationAutoRecalcThreshold | quote }}
   LOGLEVEL: {{ .Values.config.loglevel | quote }}
   LITELLM_DROP_PARAMS: {{ .Values.config.litellmDropParams | quote }}
+  DB_POOL_SIZE: {{ .Values.config.dbPoolSize | quote }}
+  DB_POOL_MAX_OVERFLOW: {{ .Values.config.dbPoolMaxOverflow | quote }}
+  DB_POOL_TIMEOUT: {{ .Values.config.dbPoolTimeout | quote }}
   {{- if .Values.global.testCluster }}
   SSL_VERIFY: "False"
   TESTCLUSTER: "True"

@@ -202,6 +202,9 @@ config:
   migrationAutoRecalcThreshold: "30"
   loglevel: "INFO"
   litellmDropParams: "True"
+  dbPoolSize: "10"
+  dbPoolMaxOverflow: "5"
+  dbPoolTimeout: "30"
 
 # Secrets configuration
 secrets:
