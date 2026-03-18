@@ -1,4 +1,4 @@
-{{- if not .Values.global.testCluster }}
+{{- if not (or .Values.global.testCluster .Values.testEnvironment) }}
 apiVersion: barmancloud.cnpg.io/v1
 kind: ObjectStore
 metadata:

@@ -34,7 +34,7 @@ spec:
     parameters:
       {{- toYaml .Values.postgres.parameters | nindent 6 }}
   {{- end }}
-  {{- if not .Values.global.testCluster }}
+  {{- if not (or .Values.global.testCluster .Values.testEnvironment) }}
   plugins:
   - name: barman-cloud.cloudnative-pg.io
     isWALArchiver: true

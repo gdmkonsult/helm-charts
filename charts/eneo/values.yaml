@@ -2,6 +2,9 @@
 global:
   domain:
 
+# Test environment flag - disables database backups when true
+testEnvironment: false
+
 # Clone from existing deployment
 # When enabled, bootstraps the database as a copy of another eneo release
 # in the same namespace using CloudNativePG pg_basebackup.
