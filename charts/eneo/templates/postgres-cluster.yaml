@@ -11,11 +11,18 @@ spec:
   instances: {{ .Values.postgres.instances }}
   enablePDB: {{ if eq (int .Values.postgres.instances) 1 }}false{{ else }}true{{ end }}
   bootstrap:
+    {{- if .Values.copyFrom.enabled }}
+    pg_basebackup:
+      source: {{ include "eneo.sourceFullname" . }}-postgres
+      database: {{ .Values.postgres.database }}
+      owner: {{ .Values.postgres.owner }}
+    {{- else }}
     initdb:
       database: {{ .Values.postgres.database }}
       owner: {{ .Values.postgres.owner }}
       postInitApplicationSQL:
         - CREATE EXTENSION IF NOT EXISTS vector;
+    {{- end }}
   storage:
     size: {{ .Values.postgres.storage.size }}
   {{- if .Values.postgres.resources }}
@@ -33,5 +40,22 @@ spec:
     isWALArchiver: true
     parameters:
       barmanObjectName: {{ include "eneo.fullname" . }}-backup-store
+  {{- end }}
+  {{- if .Values.copyFrom.enabled }}
+  externalClusters:
+  - name: {{ include "eneo.sourceFullname" . }}-postgres
+    connectionParameters:
+      host: {{ include "eneo.sourceFullname" . }}-postgres-rw.{{ .Release.Namespace }}.svc
+      user: streaming_replica
+      sslmode: verify-full
+    sslKey:
+      name: {{ include "eneo.sourceFullname" . }}-postgres-replication
+      key: tls.key
+    sslCert:
+      name: {{ include "eneo.sourceFullname" . }}-postgres-replication
+      key: tls.crt
+    sslRootCert:
+      name: {{ include "eneo.sourceFullname" . }}-postgres-ca
+      key: ca.crt
   {{- end }}
 {{- end }}

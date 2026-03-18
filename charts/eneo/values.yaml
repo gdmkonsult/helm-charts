@@ -2,6 +2,15 @@
 global:
   domain:
 
+# Clone from existing deployment
+# When enabled, bootstraps the database as a copy of another eneo release
+# in the same namespace using CloudNativePG pg_basebackup.
+# The encryption key is also copied from the source release.
+# This only takes effect on initial deploy - subsequent upgrades ignore it.
+copyFrom:
+  enabled: false
+  releaseName: ""  # Helm release name of the source eneo deployment
+
 # Backend configuration
 backend:
   enabled: true
