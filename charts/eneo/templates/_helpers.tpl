@@ -49,6 +49,19 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
+Compute the fullname of the source release for copyFrom cloning.
+Uses the same naming logic as eneo.fullname but with the source release name.
+*/}}
+{{- define "eneo.sourceFullname" -}}
+{{- $name := default .Chart.Name .Values.nameOverride }}
+{{- if contains $name .Values.copyFrom.releaseName }}
+{{- .Values.copyFrom.releaseName | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- printf "%s-%s" .Values.copyFrom.releaseName $name | trunc 63 | trimSuffix "-" }}
+{{- end }}
+{{- end }}
+
+{{/*
 Generate a random secret if not set, but preserve existing value on upgrade
 */}}
 {{- define "eneo.generateSecret" -}}
@@ -94,7 +107,8 @@ Generate URL signing key if not set, but preserve existing value on upgrade
 {{- end -}}
 
 {{/*
-Generate encryption key if not set, but preserve existing value on upgrade
+Generate encryption key if not set, but preserve existing value on upgrade.
+When copyFrom is enabled, falls back to copying the key from the source release.
 */}}
 {{- define "eneo.generateEncryptionKey" -}}
 {{- $secretName := printf "%s-secrets" (include "eneo.fullname" .context) -}}
@@ -103,6 +117,14 @@ Generate encryption key if not set, but preserve existing value on upgrade
 {{- index $secret.data "ENCRYPTION_KEY" | b64dec -}}
 {{- else if .value -}}
 {{ .value }}
+{{- else if .context.Values.copyFrom.enabled -}}
+{{- $sourceSecretName := printf "%s-secrets" (include "eneo.sourceFullname" .context) -}}
+{{- $sourceSecret := lookup "v1" "Secret" .context.Release.Namespace $sourceSecretName -}}
+{{- if and $sourceSecret (hasKey $sourceSecret.data "ENCRYPTION_KEY") -}}
+{{- index $sourceSecret.data "ENCRYPTION_KEY" | b64dec -}}
+{{- else -}}
+{{- fail (printf "copyFrom.enabled is true but could not find ENCRYPTION_KEY in secret %s" $sourceSecretName) -}}
+{{- end -}}
 {{- else -}}
 {{ randAlphaNum 32 | b64enc }}
 {{- end -}}
@@ -183,5 +205,8 @@ Validate required values
 {{- define "eneo.validateValues" -}}
 {{- if not .Values.global.domain -}}
 {{- fail "global.domain is required. Please set it in your values.yaml or via --set global.domain=your-domain.com" -}}
+{{- end -}}
+{{- if and .Values.copyFrom.enabled (not .Values.copyFrom.releaseName) -}}
+{{- fail "copyFrom.releaseName is required when copyFrom.enabled is true" -}}
 {{- end -}}
 {{- end -}}
