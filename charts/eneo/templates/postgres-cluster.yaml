@@ -6,6 +6,8 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "eneo.labels" . | nindent 4 }}
+  annotations:
+    cnpg.io/skipWalArchiving: enabled
 spec:
   imageName: {{ .Values.postgres.imageName }}
   instances: {{ .Values.postgres.instances }}
