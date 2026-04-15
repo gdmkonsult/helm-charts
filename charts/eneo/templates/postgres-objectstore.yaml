@@ -5,7 +5,7 @@ metadata:
   name: {{ include "eneo.fullname" . }}-backup-store
   namespace: {{ .Release.Namespace }}
 spec:
-  retentionPolicy: 30d
+  retentionPolicy: 7d
   configuration:
     destinationPath: s3://gdm-rke2-ai-services-eneo/{{ .Release.Namespace }}/postgres
     endpointURL: https://rustfs.k8s.gdmcloud.se
