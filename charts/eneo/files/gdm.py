@@ -17,16 +17,29 @@ gdm_config = {}
 with open("/app/gdm.json", "r") as f:
     gdm_config = json.loads(f.read())
 
+is_test = os.getenv("TESTCLUSTER", "").lower() == "true"
+portal_base = "https://aidev.gdm.se" if is_test else "https://ai.gdm.se"
+
 provider_config = {
     "name": "GDM",
     "provider_type": "openai",
     "config": {
-        "endpoint": "https://aidev.gdm.se/api/v1" if os.getenv("TESTCLUSTER", "").lower() == "true" else "https://ai.gdm.se/api/v1"
+        "endpoint": f"{portal_base}/api/v1"
     },
     "credentials": {
         "api_key": gdm_config.get("apiKey", "")
     },
     "is_active": gdm_config.get("enabled", False)
+}
+
+mcp_server_config = {
+    "name": "GDM MCP Gateway",
+    "http_url": f"{portal_base}/api/v1/mcp",
+    "http_auth_type": "bearer",
+    "http_auth_config_schema": {
+        "token": gdm_config.get("apiKey", "")
+    },
+    "description": "GDM AI MCP Gateway",
 }
 
 completion_models = [
@@ -247,6 +260,129 @@ def ensure_transcription_models(access_token, provider_id, models):
             result = create_transcription_model(access_token, model_data)
             print("Created:", json.dumps(result, indent=2))
 
+
+# ---------------------------------------------------------------------------
+# MCP server provisioning (creates MCP server entry in Eneo)
+# ---------------------------------------------------------------------------
+
+def get_mcp_servers(access_token):
+    api_url = f"{url}/api/v1/mcp-servers/"
+    headers = {"Authorization": f"Bearer {access_token}"}
+    response = requests.get(api_url, headers=headers, verify=False)
+    response.raise_for_status()
+    return response.json()
+
+def create_mcp_server(access_token, server_data):
+    api_url = f"{url}/api/v1/mcp-servers/"
+    headers = {"Authorization": f"Bearer {access_token}"}
+    response = requests.post(api_url, headers=headers, json=server_data, verify=False)
+    response.raise_for_status()
+    return response.json()
+
+def update_mcp_server(access_token, server_id, server_data):
+    api_url = f"{url}/api/v1/mcp-servers/{server_id}/"
+    headers = {"Authorization": f"Bearer {access_token}"}
+    response = requests.post(api_url, headers=headers, json=server_data, verify=False)
+    response.raise_for_status()
+    return response.json()
+
+def enable_mcp_server_for_tenant(access_token, server_id):
+    api_url = f"{url}/api/v1/mcp-servers/settings/{server_id}/"
+    headers = {"Authorization": f"Bearer {access_token}"}
+    response = requests.post(api_url, headers=headers, json={}, verify=False)
+    response.raise_for_status()
+    return response.json()
+
+def sync_mcp_server_tools(access_token, server_id):
+    api_url = f"{url}/api/v1/mcp-servers/{server_id}/tools/sync/"
+    headers = {"Authorization": f"Bearer {access_token}"}
+    response = requests.post(api_url, headers=headers, verify=False)
+    response.raise_for_status()
+    return response.json()
+
+def approve_all_mcp_tools(access_token, server_id):
+    api_url = f"{url}/api/v1/mcp-servers/{server_id}/tools/review/approve-all/"
+    headers = {"Authorization": f"Bearer {access_token}"}
+    response = requests.post(api_url, headers=headers, verify=False)
+    response.raise_for_status()
+    return response.json()
+
+def ensure_mcp_server(access_token, server_data):
+    """Create or update the GDM MCP Gateway server in Eneo."""
+    servers = get_mcp_servers(access_token)
+    existing = next(
+        (s for s in servers if s.get("name") == server_data["name"]),
+        None
+    )
+
+    if existing:
+        server_id = existing["id"]
+        print(f"[MCP] Server '{server_data['name']}' already exists (id={server_id}), updating...")
+        result = update_mcp_server(access_token, server_id, server_data)
+        print(f"[MCP] Updated MCP server.")
+        return result.get("server", result) if isinstance(result, dict) else result
+    else:
+        print(f"[MCP] Server '{server_data['name']}' not found, creating...")
+        result = create_mcp_server(access_token, server_data)
+        server = result.get("server", result) if isinstance(result, dict) else result
+        connection = result.get("connection", {})
+        print(f"[MCP] Created MCP server (id={server.get('id', '?')})")
+        if connection.get("success"):
+            print(f"[MCP] Connection successful, {connection.get('tools_discovered', 0)} tools discovered.")
+        elif connection.get("error_message"):
+            print(f"[MCP] Connection failed: {connection['error_message']}")
+        return server
+
+    return result
+
+def setup_mcp(access_token):
+    """Set up the GDM MCP Gateway in Eneo: create server, enable for tenant, sync & approve tools."""
+    api_key = gdm_config.get("apiKey", "")
+    if not api_key:
+        print("[MCP] No API key configured, skipping MCP setup.")
+        return
+
+    try:
+        server = ensure_mcp_server(access_token, mcp_server_config)
+        server_id = server.get("id")
+        if not server_id:
+            print("[MCP] Could not determine server ID, skipping further setup.")
+            return
+
+        # Enable MCP server for the tenant
+        try:
+            enable_mcp_server_for_tenant(access_token, server_id)
+            print(f"[MCP] Enabled MCP server for tenant.")
+        except requests.exceptions.HTTPError as e:
+            if e.response is not None and e.response.status_code == 409:
+                print("[MCP] MCP server already enabled for tenant.")
+            else:
+                raise
+
+        # Sync tools from the gateway
+        sync_result = sync_mcp_server_tools(access_token, server_id)
+        connection = sync_result.get("connection", {})
+        if connection.get("success"):
+            new_count = len(sync_result.get("new_tools", []))
+            changed_count = len(sync_result.get("changed_tools", []))
+            unchanged = sync_result.get("unchanged_count", 0)
+            print(f"[MCP] Tool sync: {new_count} new, {changed_count} changed, {unchanged} unchanged.")
+
+            # Auto-approve any pending changes
+            if sync_result.get("has_pending_changes"):
+                approve_all_mcp_tools(access_token, server_id)
+                print("[MCP] Approved all pending tool changes.")
+        else:
+            print(f"[MCP] Tool sync connection failed: {connection.get('error_message', 'unknown error')}")
+
+    except requests.exceptions.HTTPError as e:
+        print(f"[MCP] HTTP error during MCP setup: {e}")
+        if e.response is not None:
+            print(f"[MCP] Response: {e.response.text[:500]}")
+    except Exception as e:
+        print(f"[MCP] Error during MCP setup: {e}")
+
+
 if __name__ == "__main__":
     wait_for_health()
     token_data = get_token()
@@ -256,5 +392,9 @@ if __name__ == "__main__":
     ensure_completion_models(access_token, provider["id"], completion_models)
     ensure_embedding_models(access_token, provider["id"], embedding_models)
     ensure_transcription_models(access_token, provider["id"], transcription_models)
+
+    if gdm_config.get("enabled", False):
+        setup_mcp(access_token)
+
     while True:
         time.sleep(86400)  # Sleep for 24 hours at a time
