@@ -40,6 +40,7 @@ mcp_server_config = {
         "token": gdm_config.get("apiKey", "")
     },
     "description": "GDM AI MCP Gateway",
+    "documentation_url": f"{portal_base}/api-docs",
 }
 
 completion_models = [
