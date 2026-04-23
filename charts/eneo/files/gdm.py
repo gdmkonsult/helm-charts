@@ -271,7 +271,8 @@ def get_mcp_servers(access_token):
     headers = {"Authorization": f"Bearer {access_token}"}
     response = requests.get(api_url, headers=headers, verify=False)
     response.raise_for_status()
-    return response.json()
+    data = response.json()
+    return data.get("items", data) if isinstance(data, dict) else data
 
 def create_mcp_server(access_token, server_data):
     api_url = f"{url}/api/v1/mcp-servers/"
