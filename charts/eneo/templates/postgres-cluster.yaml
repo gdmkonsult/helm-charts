@@ -26,7 +26,7 @@ spec:
         - CREATE EXTENSION IF NOT EXISTS vector;
     {{- end }}
   storage:
-    size: {{ .Values.postgres.storage.size }}
+    size: {{ .Values.postgres.storage.size | default "50Gi" }}}
   {{- if .Values.postgres.resources }}
   resources:
     {{- toYaml .Values.postgres.resources | nindent 4 }}
