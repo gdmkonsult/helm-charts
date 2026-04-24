@@ -395,7 +395,7 @@ if __name__ == "__main__":
     ensure_embedding_models(access_token, provider["id"], embedding_models)
     ensure_transcription_models(access_token, provider["id"], transcription_models)
 
-    if gdm_config.get("enabled", False):
+    if gdm_config.get("enabled", False) and gdm_config.get("mcpEnabled", True):
         setup_mcp(access_token)
 
     while True:
