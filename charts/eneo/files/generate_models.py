@@ -18,6 +18,21 @@ models["completion_models"].append({
 })
 
 models["completion_models"].append({
+    "name": "gemma4-31b-it",
+    "nickname": "gemma4-31b-it",
+    "family": "openai",
+    "token_limit": 256000,
+    "stability": "stable",
+    "is_deprecated": False,
+    "hosting": "swe",
+    "description": "Google's Gemma 4 31B instruction-tuned model, hosted by GDM in Sweden (ai.gdm.se).",
+    "org": "GDM",
+    "vision": True,
+    "reasoning": True,
+    "litellm_model_name": "gdm/gemma4-31b-it"
+})
+
+models["completion_models"].append({
     "name": "gpt-oss-120b",
     "nickname": "gpt-oss-120b",
     "family": "openai",

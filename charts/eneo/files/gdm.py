@@ -54,6 +54,15 @@ completion_models = [
         "is_active": True,
     },
     {
+        "name": "gemma4-31b-it",
+        "display_name": "gemma4-31b-it",
+        "token_limit": 256000,
+        "vision": True,
+        "reasoning": True,
+        "hosting": "swe",
+        "is_active": True,
+    },
+    {
         "name": "gpt-oss-120b",
         "display_name": "gpt-oss-120b",
         "token_limit": 128000,
