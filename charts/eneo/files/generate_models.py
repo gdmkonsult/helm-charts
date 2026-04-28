@@ -22,6 +22,8 @@ models["completion_models"].append({
     "nickname": "gemma4-31b-it",
     "family": "openai",
     "token_limit": 256000,
+    "max_input_tokens": 256000,
+    "max_output_tokens": 4096,
     "stability": "stable",
     "is_deprecated": False,
     "hosting": "swe",

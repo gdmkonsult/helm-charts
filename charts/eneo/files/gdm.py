@@ -57,6 +57,8 @@ completion_models = [
         "name": "gemma4-31b-it",
         "display_name": "gemma4-31b-it",
         "token_limit": 256000,
+        "max_input_tokens": 256000,
+        "max_output_tokens": 4096,
         "vision": True,
         "reasoning": True,
         "hosting": "swe",
@@ -172,6 +174,11 @@ def create_completion_model(access_token, model_data):
     api_url = f"{url}/api/v1/admin/tenant-models/completion/"
     headers = {"Authorization": f"Bearer {access_token}"}
     response = requests.post(api_url, headers=headers, json=model_data, verify=False)
+    if not response.ok:
+        print(
+            f"Completion model create failed for '{model_data.get('name')}' "
+            f"with status={response.status_code} body={response.text}"
+        )
     response.raise_for_status()
     return response.json()
 
@@ -179,6 +186,11 @@ def update_completion_model(access_token, model_id, model_data):
     api_url = f"{url}/api/v1/admin/tenant-models/completion/{model_id}/"
     headers = {"Authorization": f"Bearer {access_token}"}
     response = requests.put(api_url, headers=headers, json=model_data, verify=False)
+    if not response.ok:
+        print(
+            f"Completion model update failed for '{model_data.get('name')}' "
+            f"(id={model_id}) with status={response.status_code} body={response.text}"
+        )
     response.raise_for_status()
     return response.json()
 
@@ -192,15 +204,19 @@ def ensure_completion_models(access_token, provider_id, models):
         model_data = {**model, "provider_id": provider_id}
         name = model["name"]
 
-        if name in existing_by_name:
-            model_id = existing_by_name[name]["id"]
-            print(f"Completion model '{name}' already exists (id={model_id}), updating...")
-            result = update_completion_model(access_token, model_id, model_data)
-            print("Updated:", json.dumps(result, indent=2))
-        else:
-            print(f"Completion model '{name}' not found, creating...")
-            result = create_completion_model(access_token, model_data)
-            print("Created:", json.dumps(result, indent=2))
+        try:
+            if name in existing_by_name:
+                model_id = existing_by_name[name]["id"]
+                print(f"Completion model '{name}' already exists (id={model_id}), updating...")
+                result = update_completion_model(access_token, model_id, model_data)
+                print("Updated:", json.dumps(result, indent=2))
+            else:
+                print(f"Completion model '{name}' not found, creating...")
+                result = create_completion_model(access_token, model_data)
+                print("Created:", json.dumps(result, indent=2))
+        except requests.exceptions.HTTPError as e:
+            print(f"Skipping completion model '{name}' due to API validation error: {e}")
+            continue
 
 def create_embedding_model(access_token, model_data):
     api_url = f"{url}/api/v1/admin/tenant-models/embedding/"
