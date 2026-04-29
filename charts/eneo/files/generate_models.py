@@ -25,7 +25,7 @@ models["completion_models"].append({
     "family": "openai",
     "token_limit": 256000,
     "max_input_tokens": 256000,
-    "max_output_tokens": 4096,
+    "max_output_tokens": 65536,
     "stability": "stable",
     "is_deprecated": False,
     "hosting": "swe",

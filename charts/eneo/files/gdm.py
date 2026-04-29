@@ -60,7 +60,7 @@ completion_models = [
         "display_name": "gemma4-31b-it",
         "token_limit": 256000,
         "max_input_tokens": 256000,
-        "max_output_tokens": 4096,
+        "max_output_tokens": 65536,
         "vision": True,
         "reasoning": True,
         "hosting": "swe",
