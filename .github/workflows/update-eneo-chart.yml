@@ -1,0 +1,93 @@
+name: Update Eneo Chart
+
+on:
+  schedule:
+    # Poll every hour
+    - cron: "0/15 * * * *"
+  workflow_dispatch:
+    inputs:
+      app_version:
+        description: "Override version (e.g. 1.9.2). Leave empty to auto-detect latest."
+        required: false
+
+jobs:
+  update-chart:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for new eneo release
+        id: version
+        run: |
+          # Get the latest release tag from the eneo repo (public API, no auth needed)
+          LATEST=$(curl -sf https://api.github.com/repos/eneo-ai/eneo/releases/latest \
+            | jq -r '.tag_name // empty')
+
+          if [[ -z "$LATEST" ]]; then
+            echo "Could not fetch latest release from eneo-ai/eneo"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Allow manual override
+          if [[ -n "${{ github.event.inputs.app_version }}" ]]; then
+            LATEST="v${{ github.event.inputs.app_version }}"
+          fi
+
+          # Strip leading 'v'
+          APP_VERSION="${LATEST#v}"
+
+          # Read current appVersion from Chart.yaml
+          CURRENT_APP=$(grep '^appVersion:' charts/eneo/Chart.yaml | sed 's/appVersion: *"\(.*\)"/\1/')
+
+          echo "Latest eneo release: ${APP_VERSION}"
+          echo "Current chart appVersion: ${CURRENT_APP}"
+
+          if [[ "$APP_VERSION" == "$CURRENT_APP" ]]; then
+            echo "Already up to date."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          echo "app_version=${APP_VERSION}" >> "$GITHUB_OUTPUT"
+
+          # Bump chart patch version
+          CURRENT=$(grep '^version:' charts/eneo/Chart.yaml | awk '{print $2}')
+          MAJOR=$(echo "$CURRENT" | cut -d. -f1)
+          MINOR=$(echo "$CURRENT" | cut -d. -f2)
+          PATCH=$(echo "$CURRENT" | cut -d. -f3)
+          NEW_PATCH=$((PATCH + 1))
+          CHART_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}"
+          echo "chart_version=${CHART_VERSION}" >> "$GITHUB_OUTPUT"
+
+          echo "Chart version: ${CURRENT} -> ${CHART_VERSION}"
+
+      - name: Update Chart.yaml and values.yaml
+        if: steps.version.outputs.skip != 'true'
+        run: |
+          sed -i "s/^version: .*/version: ${{ steps.version.outputs.chart_version }}/" charts/eneo/Chart.yaml
+          sed -i "s/^appVersion: .*/appVersion: \"${{ steps.version.outputs.app_version }}\"/" charts/eneo/Chart.yaml
+          cat charts/eneo/Chart.yaml
+
+          # Update image tags for backend, frontend, and worker in values.yaml
+          # Matches lines like:  tag: "1.x.y" under eneo image sections (not redis etc.)
+          CURRENT_TAG=$(grep '^appVersion:' charts/eneo/Chart.yaml | sed 's/appVersion: *"\(.*\)"/\1/' || true)
+          sed -i '/repository: ghcr.io\/eneo-ai\/eneo-/{n;s/tag: ".*"/tag: "'"${{ steps.version.outputs.app_version }}"'"/;}' charts/eneo/values.yaml
+          echo "Updated values.yaml image tags:"
+          grep -A1 'repository: ghcr.io/eneo-ai/eneo-' charts/eneo/values.yaml
+
+      - name: Commit and push
+        if: steps.version.outputs.skip != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add charts/eneo/Chart.yaml charts/eneo/values.yaml
+          git diff --cached --quiet && exit 0
+          git commit -m "chore(eneo): bump appVersion to ${{ steps.version.outputs.app_version }} and chart version to ${{ steps.version.outputs.chart_version }}"
+          git push
