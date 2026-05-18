@@ -137,7 +137,7 @@ def get_access_token():
     token_url = f"{url}/api/v1/sysadmin/users/{user_id}/access-token/"
     response = requests.post(token_url, headers=sysadmin_headers, verify=False)
     response.raise_for_status()
-    return response.json()
+    return response.json()  # returns the JWT string directly
 
 def get_model_providers(access_token):
     api_url = f"{url}/api/v1/admin/model-providers/"
@@ -429,8 +429,7 @@ def setup_mcp(access_token):
 
 if __name__ == "__main__":
     wait_for_health()
-    token_data = get_access_token()
-    access_token = token_data["access_token"]
+    access_token = get_access_token()
 
     provider = ensure_model_provider(access_token, provider_config)
     ensure_completion_models(access_token, provider["id"], completion_models)
