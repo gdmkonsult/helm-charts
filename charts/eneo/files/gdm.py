@@ -10,8 +10,7 @@ import urllib3
 urllib3.disable_warnings()
 
 url = os.getenv("ENEO_URL", "http://localhost:8000")
-username = os.getenv("DEFAULT_USER_EMAIL", "")
-password = os.getenv("DEFAULT_USER_PASSWORD", "")
+super_api_key = os.getenv("ENEO_SUPER_API_KEY", "")
 
 gdm_config = {}
 with open("/app/gdm.json", "r") as f:
@@ -116,13 +115,27 @@ def wait_for_health():
         print("Retrying in 5 seconds...")
         time.sleep(5)
 
-def get_token():
-    login_url = f"{url}/api/v1/users/login/token/"
-    payload = {
-        "username": username,
-        "password": password
-    }
-    response = requests.post(login_url, data=payload, verify=False)
+def get_access_token():
+    """Get a JWT access token via the sysadmin API.
+
+    Uses ENEO_SUPER_API_KEY to list users, find the first admin user,
+    and mint a JWT for that user. This avoids depending on a user
+    password that can be changed via the reseller portal.
+    """
+    sysadmin_headers = {"X-API-Key": super_api_key}
+
+    # Find the default admin user
+    users_url = f"{url}/api/v1/sysadmin/users/"
+    response = requests.get(users_url, headers=sysadmin_headers, verify=False)
+    response.raise_for_status()
+    users = response.json().get("items", [])
+    if not users:
+        raise RuntimeError("No users found in Eneo – cannot mint access token")
+    user_id = users[0]["id"]
+
+    # Mint a JWT for that user (no password needed)
+    token_url = f"{url}/api/v1/sysadmin/users/{user_id}/access-token/"
+    response = requests.post(token_url, headers=sysadmin_headers, verify=False)
     response.raise_for_status()
     return response.json()
 
@@ -416,7 +429,7 @@ def setup_mcp(access_token):
 
 if __name__ == "__main__":
     wait_for_health()
-    token_data = get_token()
+    token_data = get_access_token()
     access_token = token_data["access_token"]
 
     provider = ensure_model_provider(access_token, provider_config)
