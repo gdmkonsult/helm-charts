@@ -26,8 +26,9 @@ jobs:
         id: version
         run: |
           # Get the latest release tag from the eneo repo (public API, no auth needed)
-          LATEST=$(curl -sf https://api.github.com/repos/eneo-ai/eneo/releases/latest \
-            | jq -r '.tag_name // empty')
+          # Uses /releases endpoint to include pre-releases, sorted by date descending
+          LATEST=$(curl -sf https://api.github.com/repos/eneo-ai/eneo/releases \
+            | jq -r '[.[] | select(.draft | not)][0].tag_name // empty')
 
           if [[ -z "$LATEST" ]]; then
             echo "Could not fetch latest release from eneo-ai/eneo"
