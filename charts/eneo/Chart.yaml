@@ -2,8 +2,8 @@ apiVersion: v2
 name: eneo
 description: A Helm chart for eneo application
 type: application
-version: 1.0.125
-appVersion: "2.0.0-rc.3"
+version: 1.0.126
+appVersion: "2.0.0"
 keywords:
   - eneo
   - ai
