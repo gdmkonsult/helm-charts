@@ -3,6 +3,7 @@
 
 import json
 import time
+import uuid
 import requests
 import os
 import urllib3
@@ -115,29 +116,69 @@ def wait_for_health():
         print("Retrying in 5 seconds...")
         time.sleep(5)
 
-def get_access_token():
-    """Get a JWT access token via the sysadmin API.
+def _find_owner_role_id(users):
+    """Return the role ID for the predefined 'Owner' role."""
+    for user in users:
+        for role in user.get("roles", []):
+            if role.get("predefined_source") == "Owner" or role.get("name") == "Owner":
+                return role["id"]
+    return None
 
-    Uses ENEO_SUPER_API_KEY to list users, find the first admin user,
-    and mint a JWT for that user. This avoids depending on a user
-    password that can be changed via the reseller portal.
+
+def create_temp_admin_user():
+    """Create a temporary Owner-level user and return (user_id, access_token).
+
+    Uses ENEO_SUPER_API_KEY to:
+      1. Scan existing users for the role ID that carries the 'admin' permission.
+      2. Create a short-lived service user with that role.
+      3. Mint a JWT for the new user.
+
+    The caller MUST call delete_temp_admin_user(user_id) when done.
     """
     sysadmin_headers = {"X-API-Key": super_api_key}
 
-    # Find the default admin user
+    # List users to discover the tenant ID and the admin role ID
     users_url = f"{url}/api/v1/sysadmin/users/"
     response = requests.get(users_url, headers=sysadmin_headers, verify=False)
     response.raise_for_status()
     users = response.json().get("items", [])
     if not users:
-        raise RuntimeError("No users found in Eneo – cannot mint access token")
-    user_id = users[0]["id"]
+        raise RuntimeError("No users found in Eneo – cannot determine tenant")
 
-    # Mint a JWT for that user (no password needed)
+    tenant_id = users[0]["tenant_id"]
+    admin_role_id = _find_owner_role_id(users)
+    if admin_role_id is None:
+        raise RuntimeError("No 'Owner' role found in tenant")
+
+    # Create a temporary service user with the admin role
+    tag = uuid.uuid4().hex[:8]
+    payload = {
+        "email": f"gdm-config-{tag}@gdm.internal",
+        "username": f"gdm-config-{tag}",
+        "password": uuid.uuid4().hex,
+        "tenant_id": tenant_id,
+        "roles": [{"id": admin_role_id}],
+    }
+    response = requests.post(users_url, headers=sysadmin_headers, json=payload, verify=False)
+    response.raise_for_status()
+    user_id = response.json()["id"]
+    print(f"Created temp admin user {payload['email']} ({user_id})")
+
+    # Mint a JWT for the temp user
     token_url = f"{url}/api/v1/sysadmin/users/{user_id}/access-token/"
     response = requests.post(token_url, headers=sysadmin_headers, verify=False)
     response.raise_for_status()
-    return response.json()  # returns the JWT string directly
+    access_token = response.json()
+    return user_id, access_token
+
+
+def delete_temp_admin_user(user_id):
+    """Delete the temporary service user created by create_temp_admin_user."""
+    sysadmin_headers = {"X-API-Key": super_api_key}
+    delete_url = f"{url}/api/v1/sysadmin/users/{user_id}/"
+    response = requests.delete(delete_url, headers=sysadmin_headers, verify=False)
+    response.raise_for_status()
+    print(f"Deleted temp admin user {user_id}")
 
 def get_model_providers(access_token):
     api_url = f"{url}/api/v1/admin/model-providers/"
@@ -429,15 +470,17 @@ def setup_mcp(access_token):
 
 if __name__ == "__main__":
     wait_for_health()
-    access_token = get_access_token()
+    temp_user_id, access_token = create_temp_admin_user()
+    try:
+        provider = ensure_model_provider(access_token, provider_config)
+        ensure_completion_models(access_token, provider["id"], completion_models)
+        ensure_embedding_models(access_token, provider["id"], embedding_models)
+        ensure_transcription_models(access_token, provider["id"], transcription_models)
 
-    provider = ensure_model_provider(access_token, provider_config)
-    ensure_completion_models(access_token, provider["id"], completion_models)
-    ensure_embedding_models(access_token, provider["id"], embedding_models)
-    ensure_transcription_models(access_token, provider["id"], transcription_models)
-
-    if gdm_config.get("enabled", False) and gdm_config.get("mcpEnabled", True):
-        setup_mcp(access_token)
+        if gdm_config.get("enabled", False) and gdm_config.get("mcpEnabled", True):
+            setup_mcp(access_token)
+    finally:
+        delete_temp_admin_user(temp_user_id)
 
     while True:
         time.sleep(86400)  # Sleep for 24 hours at a time
