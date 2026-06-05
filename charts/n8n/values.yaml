@@ -122,6 +122,25 @@ secrets:
   adminEmail: ""
   adminPassword: ""
 
+# Inference provisioning (for customers with llmportal Organization.inferens=true)
+inferens:
+  enabled: false
+  # Required when enabled
+  apiKey: ""
+  # Optional. If empty, defaults by cluster:
+  # - testCluster=true  -> https://aidev.gdm.se/api/v1
+  # - testCluster=false -> https://ai.gdm.se/api/v1
+  endpoint: ""
+  # Name of the credential created in n8n
+  credentialName: "GDM Inference"
+  # Optional model hint stored in the credential
+  defaultModel: ""
+
+# MCP toggle forwarded from llmportal n8n ApplicationType form.
+# This value is reserved for MCP-related bootstrap/config integration.
+mcp:
+  enabled: false
+
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""

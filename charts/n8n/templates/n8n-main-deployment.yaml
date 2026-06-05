@@ -1,6 +1,8 @@
 {{- if .Values.main.enabled -}}
 {{- include "n8n.validateValues" . -}}
 {{- $profile := include "n8n.profile" . | fromYaml -}}
+{{- $needsSetupScripts := or (and .Values.secrets.adminEmail .Values.secrets.adminPassword) .Values.inferens.enabled -}}
+{{- $inferensEndpoint := .Values.inferens.endpoint | default (ternary "https://aidev.gdm.se/api/v1" "https://ai.gdm.se/api/v1" .Values.global.testCluster) -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -210,6 +212,40 @@ spec:
             - name: setup-scripts
               mountPath: /scripts
         {{- end }}
+        {{- if .Values.inferens.enabled }}
+        - name: n8n-inferens
+          image: python:3.12-alpine
+          command: ["/bin/sh", "-c", "python3 -u /scripts/inferens.py"]
+          env:
+            - name: N8N_URL
+              value: "http://localhost:{{ .Values.main.service.targetPort }}"
+            - name: N8N_DEFAULT_USER_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "n8n.fullname" . }}-secrets
+                  key: N8N_DEFAULT_USER_EMAIL
+            - name: N8N_DEFAULT_USER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "n8n.fullname" . }}-secrets
+                  key: N8N_DEFAULT_USER_PASSWORD
+            - name: INFERENS_ENABLED
+              value: "true"
+            - name: INFERENS_ENDPOINT
+              value: {{ $inferensEndpoint | quote }}
+            - name: INFERENS_CREDENTIAL_NAME
+              value: {{ .Values.inferens.credentialName | quote }}
+            - name: INFERENS_DEFAULT_MODEL
+              value: {{ .Values.inferens.defaultModel | quote }}
+            - name: INFERENS_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "n8n.fullname" . }}-secrets
+                  key: INFERENS_API_KEY
+          volumeMounts:
+            - name: setup-scripts
+              mountPath: /scripts
+        {{- end }}
       restartPolicy: Always
       {{- with .Values.nodeSelector }}
       nodeSelector:
@@ -223,7 +259,7 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if and .Values.secrets.adminEmail .Values.secrets.adminPassword }}
+      {{- if $needsSetupScripts }}
       volumes:
         - name: setup-scripts
           configMap:

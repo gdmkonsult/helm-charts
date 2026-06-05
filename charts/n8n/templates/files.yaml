@@ -8,3 +8,5 @@ metadata:
 data:
   setup.py: |
 {{ .Files.Get "files/setup.py" | indent 4 }}
+  inferens.py: |
+{{ .Files.Get "files/inferens.py" | indent 4 }}

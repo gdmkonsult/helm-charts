@@ -52,10 +52,26 @@ helm install n8n ./charts/n8n \
 | `config.runners.enabled` | Enable external runners | `true` |
 | `secrets.encryptionKey` | n8n encryption key (auto-generated) | `""` |
 | `secrets.runnerToken` | Runner auth token (auto-generated) | `""` |
+| `inferens.enabled` | Auto-provision GDM inference credential in n8n | `false` |
+| `inferens.apiKey` | API key used for GDM inference credential | `""` |
+| `inferens.endpoint` | OpenAI-compatible inference base URL | `""` |
+| `inferens.credentialName` | Credential name created in n8n | `"GDM Inference"` |
+| `inferens.defaultModel` | Optional default model hint in credential | `""` |
+| `mcp.enabled` | MCP feature toggle value (set by llmportal n8n form) | `false` |
 
 ## Secrets
 
 The chart auto-generates `encryptionKey` and `runnerToken` on first install and preserves them across upgrades. You can also set them explicitly in your values file.
+
+When `inferens.enabled=true`, you must also set:
+
+- `secrets.adminEmail`
+- `secrets.adminPassword`
+- `inferens.apiKey`
+
+The chart then runs a bootstrap sidecar that logs into n8n and creates/updates an OpenAI-compatible credential pointing at the configured inference endpoint.
+
+If you use llmportal's n8n application form, `mcp.enabled` is also written from the MCP switch. Keep `mcp.enabled` disabled unless inference/GDM models are enabled for the organization.
 
 ## Upgrading
 

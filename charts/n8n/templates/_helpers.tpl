@@ -85,6 +85,12 @@ Validate required values
 {{- if not .Values.global.domain -}}
 {{- fail "global.domain is required. Please set it in your values.yaml or via --set global.domain=your-domain.com" -}}
 {{- end -}}
+{{- if and .Values.inferens.enabled (or (not .Values.secrets.adminEmail) (not .Values.secrets.adminPassword)) -}}
+{{- fail "inferens.enabled requires secrets.adminEmail and secrets.adminPassword to authenticate and provision credentials in n8n" -}}
+{{- end -}}
+{{- if and .Values.inferens.enabled (not .Values.inferens.apiKey) -}}
+{{- fail "inferens.enabled requires inferens.apiKey" -}}
+{{- end -}}
 {{- end -}}
 
 {{/*
