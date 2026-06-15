@@ -3,23 +3,6 @@ import yaml
 models = { "completion_models": [], "embedding_models": [] }
 
 models["completion_models"].append({
-    "name": "gemma3-27b-it",
-    "nickname": "gemma3-27b-it",
-    "family": "openai",
-    "token_limit": 128000,
-    "max_input_tokens": 128000,
-    "max_output_tokens": 4096,
-    "stability": "stable",
-    "is_deprecated": False,
-    "hosting": "swe",
-    "description": "Google's Gemma 3 27B instruction-tuned model, hosted by GDM in Sweden (ai.gdm.se).",
-    "org": "GDM",
-    "vision": True,
-    "reasoning": False,
-    "litellm_model_name": "gdm/gemma3-27b-it"
-})
-
-models["completion_models"].append({
     "name": "gemma4-31b-it",
     "nickname": "gemma4-31b-it",
     "family": "openai",
