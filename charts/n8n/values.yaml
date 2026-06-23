@@ -79,7 +79,7 @@ postgres:
   backup:
     enabled: true
     schedule: "0 30 1 * * *"
-    retentionPolicy: "30d"
+    retentionPolicy: "7d"
     destinationPath: "s3://gdm-rke2-ai-services-n8n"
     endpointURL: "https://rustfs.k8s.gdmcloud.se"
   # postgresql: override profile default (remove to use profile)
