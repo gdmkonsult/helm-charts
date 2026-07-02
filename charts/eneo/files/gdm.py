@@ -45,17 +45,6 @@ mcp_server_config = {
 
 completion_models = [
     {
-        "name": "gemma3-27b-it",
-        "display_name": "gemma3-27b-it",
-        "token_limit": 128000,
-        "max_input_tokens": 128000,
-        "max_output_tokens": 4096,
-        "vision": True,
-        "reasoning": False,
-        "hosting": "swe",
-        "is_active": True,
-    },
-    {
         "name": "gemma4-31b-it",
         "display_name": "gemma4-31b-it",
         "token_limit": 256000,
