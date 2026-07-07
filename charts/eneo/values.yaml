@@ -20,7 +20,7 @@ backend:
   replicaCount: 1
   image:
     repository: ghcr.io/eneo-ai/eneo-backend
-    tag: "2.1.0-rc.2"
+    tag: "feature-refactor-flows-flowai"
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
@@ -40,7 +40,7 @@ frontend:
   replicaCount: 1
   image:
     repository: ghcr.io/eneo-ai/eneo-frontend
-    tag: "2.1.0-rc.2"
+    tag: "feature-refactor-flows-flowai"
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
@@ -60,7 +60,7 @@ worker:
   replicaCount: 1
   image:
     repository: ghcr.io/eneo-ai/eneo-backend
-    tag: "2.1.0-rc.2"
+    tag: "feature-refactor-flows-flowai"
     pullPolicy: IfNotPresent
   resources:
     limits:
@@ -69,6 +69,43 @@ worker:
     requests:
       cpu: "100m"
       memory: 512Mi
+
+# Celery worker for Flow execution (feature/refactor-flows-flowai only).
+# Flows dispatch execution to a dedicated Celery queue ("flows.execute"), NOT the
+# ARQ worker above. Without this enabled, flow runs are created and queued but
+# never executed. Safe to run multiple replicas.
+celeryWorker:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: ghcr.io/eneo-ai/eneo-backend
+    tag: "feature-refactor-flows-flowai"
+    pullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: "2"
+      memory: 4Gi
+    requests:
+      cpu: "100m"
+      memory: 512Mi
+
+# Celery beat scheduler for Flow reconciliation (feature/refactor-flows-flowai only).
+# Required for stale-run reconciliation/redispatch, review-checkpoint expiry, and
+# audit/webhook outbox delivery. This is a scheduler singleton - do not scale beyond
+# 1 replica (chart enforces replicas: 1).
+celeryBeat:
+  enabled: true
+  image:
+    repository: ghcr.io/eneo-ai/eneo-backend
+    tag: "feature-refactor-flows-flowai"
+    pullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: "1"
+      memory: 1Gi
+    requests:
+      cpu: "50m"
+      memory: 256Mi
 
 # Redis configuration
 redis:

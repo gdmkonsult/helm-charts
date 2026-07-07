@@ -1,0 +1,88 @@
+{{- if .Values.celeryBeat.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "eneo.fullname" . }}-celery-beat
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "eneo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: celery-beat
+  annotations:
+    reloader.stakater.com/auto: "true"
+spec:
+  # Celery beat is a scheduler singleton - running more than one replica causes
+  # duplicate scheduled reconciliation/redispatch tasks. Do not scale this beyond 1.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "eneo.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: celery-beat
+  template:
+    metadata:
+      labels:
+        {{- include "eneo.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: celery-beat
+    spec:
+      containers:
+      - name: celery-beat
+        image: "{{ .Values.celeryBeat.image.repository }}:{{ .Values.celeryBeat.image.tag }}"
+        imagePullPolicy: {{ .Values.celeryBeat.image.pullPolicy }}
+        env:
+        # Drives scheduled Flow reconciliation: stale-running reconcile, stale-queued
+        # redispatch, review-checkpoint expiry, and audit/webhook outbox delivery.
+        # Required alongside celery-worker for Flow runs to self-heal after lost
+        # dispatches (API restarts, autoreload, OOM) instead of getting stuck forever.
+        - name: RUN_AS_CELERY_BEAT
+          value: "true"
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "eneo.fullname" . }}-postgres-app
+              key: username
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "eneo.fullname" . }}-postgres-app
+              key: password
+        - name: POSTGRES_HOST
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "eneo.fullname" . }}-postgres-app
+              key: host
+        - name: POSTGRES_PORT
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "eneo.fullname" . }}-postgres-app
+              key: port
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "eneo.fullname" . }}-postgres-app
+              key: dbname
+        envFrom:
+        - configMapRef:
+            name: {{ include "eneo.fullname" . }}-config
+        - secretRef:
+            name: {{ include "eneo.fullname" . }}-secrets
+        volumeMounts:
+        - name: data
+          mountPath: /app/data
+        - name: tmp
+          mountPath: /tmp
+        {{- with .Values.celeryBeat.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: {{ include "eneo.fullname" . }}-shared-data
+      - name: tmp
+        persistentVolumeClaim:
+          claimName: {{ include "eneo.fullname" . }}-shared-tmp
+      - name: gdm-files
+        configMap:
+          name: {{ include "eneo.fullname" . }}-files
+{{- end }}
