@@ -2,6 +2,23 @@ apiVersion: v1
 entries:
   eneo:
   - apiVersion: v2
+    appVersion: 2.1.0-rc.2
+    created: "2026-07-07T12:35:13.032080883Z"
+    description: A Helm chart for eneo application
+    digest: 975ef0f8da4c6832ec08b0a8b8e471d9fbfebab1470c6590c99957bd71d6bd6d
+    keywords:
+    - eneo
+    - ai
+    - backend
+    - frontend
+    maintainers:
+    - name: GDM
+    name: eneo
+    type: application
+    urls:
+    - https://github.com/gdmkonsult/helm-charts/releases/download/eneo-1.0.133/eneo-1.0.133.tgz
+    version: 1.0.133
+  - apiVersion: v2
     appVersion: 2.0.1-feature-refactor-flows-flowai
     created: "2026-07-07T12:22:17.505768821Z"
     description: A Helm chart for eneo application
@@ -2434,4 +2451,4 @@ entries:
     urls:
     - https://github.com/gdmkonsult/helm-charts/releases/download/n8n-1.0.0/n8n-1.0.0.tgz
     version: 1.0.0
-generated: "2026-07-07T12:22:17.506363454Z"
+generated: "2026-07-07T12:35:13.032413228Z"
