@@ -79,9 +79,15 @@ spec:
       - name: data
         persistentVolumeClaim:
           claimName: {{ include "eneo.fullname" . }}-shared-data
+      # celery beat's PersistentScheduler stores its due-task bookkeeping in a
+      # shelve/dbm file at /tmp/celerybeat-schedule, which needs real POSIX file
+      # locking. The shared NFS-backed tmp PVC (gdm-ai-nfs) does not reliably
+      # support this, which silently hangs beat's tick loop after the first
+      # iteration (no further "Scheduler: Sending due task" log lines, ever).
+      # Use local ephemeral storage instead - beat doesn't need the shared
+      # audit-export tmp space that backend/worker use.
       - name: tmp
-        persistentVolumeClaim:
-          claimName: {{ include "eneo.fullname" . }}-shared-tmp
+        emptyDir: {}
       - name: gdm-files
         configMap:
           name: {{ include "eneo.fullname" . }}-files
