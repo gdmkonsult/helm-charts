@@ -26,6 +26,7 @@ spec:
         - CREATE EXTENSION IF NOT EXISTS vector;
     {{- end }}
   storage:
+    storageClass: {{ .Values.postgres.storage.storageClass | default "fa-rwx" }}
     size: {{ .Values.postgres.storage.size | default "50Gi" }}
   {{- if .Values.postgres.resources }}
   resources:

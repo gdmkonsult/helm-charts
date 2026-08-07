@@ -141,6 +141,7 @@ postgres:
   owner: eneo
   storage:
     size: 50Gi
+    storageClass: fa-rwx
   resources:
     limits:
       cpu: "2"
