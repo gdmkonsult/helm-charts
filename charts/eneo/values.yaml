@@ -220,10 +220,10 @@ config:
   jwtExpiryTime: "86400"
   jwtAlgorithm: "HS256"
   jwtTokenPrefix: "Bearer"
-  oidcStateTtlSeconds: "600"
-  oidcRedirectGracePeriodSeconds: "600"
+  oidcStateTtlSeconds: "1800"
+  oidcRedirectGracePeriodSeconds: "1800"
   strictOidcRedirectValidation: "true"
-  oidcClockLeewaySeconds: "120"
+  oidcClockLeewaySeconds: "180"
   # Per-tenant federation: when "True", each tenant uses its own IdP config
   # from the DB. The global OIDC settings (oidc.*) become inert.
   # Requires secrets.encryptionKey (auto-generated if empty).
