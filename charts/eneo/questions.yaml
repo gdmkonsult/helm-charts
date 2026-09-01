@@ -11,3 +11,7 @@ questions:
   default: "first@example.com"
   type: string
   label: Default User Email
+- variable: easyTranscriber.enabled
+  default: false
+  type: boolean
+  label: Enable EasyTranscriber word timestamps

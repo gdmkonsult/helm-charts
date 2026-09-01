@@ -2,6 +2,12 @@
 global:
   domain:
 
+# Optional centrally hosted EasyTranscriber pipeline. Eneo continues to call the
+# GDM provider; no GPU workload or internal service credential is added here.
+easyTranscriber:
+  enabled: false
+  modelName: kb-whisper-large-aligned
+
 # Test environment flag - disables database backups when true
 testEnvironment: false
 
@@ -243,7 +249,7 @@ config:
   uploadFileToSessionMaxSize: "104857600"
   uploadImageToSessionMaxSize: "104857600"
   uploadMaxFileSize: "209715200"
-  transcriptionMaxFileSize: "209715200"
+  transcriptionMaxFileSize: "104857600"
   maxInQuestion: "10"
   crawlMaxLength: "14400"
   crawlPageBatchSize: "1"

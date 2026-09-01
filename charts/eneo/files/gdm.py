@@ -88,6 +88,19 @@ transcription_models = [
     },
 ]
 
+easytranscriber_model_name = os.getenv(
+    "EASYTRANSCRIBER_MODEL", "kb-whisper-large-aligned"
+)
+easytranscriber_model = {
+    "name": easytranscriber_model_name,
+    "display_name": easytranscriber_model_name,
+    "hosting": "swe",
+    "is_active": True,
+}
+easytranscriber_enabled = os.getenv("EASYTRANSCRIBER_ENABLED", "false").lower() == "true"
+if easytranscriber_enabled:
+    transcription_models.append(easytranscriber_model)
+
 def wait_for_health():
     """Wait for the API healthz endpoint to return 200"""
     health_url = f"{url.rstrip('/')}/api/healthz"
@@ -313,8 +326,8 @@ def update_transcription_model(access_token, model_id, model_data):
     response.raise_for_status()
     return response.json()
 
-def ensure_transcription_models(access_token, provider_id, models):
-    """Create or update transcription models for the given provider."""
+def ensure_transcription_models(access_token, provider_id, models, disabled_models=None):
+    """Create/update desired models and deactivate disabled managed models."""
     ai_models = get_ai_models(access_token)
     existing_transcription = ai_models.get("transcription_models", [])
     existing_by_name = {m["name"]: m for m in existing_transcription if m.get("name")}
@@ -332,6 +345,19 @@ def ensure_transcription_models(access_token, provider_id, models):
             print(f"Transcription model '{name}' not found, creating...")
             result = create_transcription_model(access_token, model_data)
             print("Created:", json.dumps(result, indent=2))
+
+    for model in disabled_models or []:
+        name = model["name"]
+        existing = existing_by_name.get(name)
+        if existing and existing.get("is_active", True):
+            model_data = {**model, "provider_id": provider_id, "is_active": False}
+            print(f"Transcription model '{name}' is disabled, deactivating...")
+            result = update_transcription_model(
+                access_token,
+                existing["id"],
+                model_data,
+            )
+            print("Deactivated:", json.dumps(result, indent=2))
 
 
 # ---------------------------------------------------------------------------
@@ -464,7 +490,12 @@ if __name__ == "__main__":
         provider = ensure_model_provider(access_token, provider_config)
         ensure_completion_models(access_token, provider["id"], completion_models)
         ensure_embedding_models(access_token, provider["id"], embedding_models)
-        ensure_transcription_models(access_token, provider["id"], transcription_models)
+        ensure_transcription_models(
+            access_token,
+            provider["id"],
+            transcription_models,
+            disabled_models=[] if easytranscriber_enabled else [easytranscriber_model],
+        )
 
         if gdm_config.get("enabled", False) and gdm_config.get("mcpEnabled", True):
             setup_mcp(access_token)
