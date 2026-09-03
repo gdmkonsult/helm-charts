@@ -14,6 +14,12 @@ copyFrom:
   enabled: false
   releaseName: "" # Helm release name of the source eneo deployment
 
+# Flow preview images use migrations and permissions that are not yet in the
+# stable release. Keep all application components on the same image channel.
+flowImage:
+  autoDetectFromReleaseName: true
+  tag: "feature-refactor-flows-flowai"
+
 # Backend configuration
 backend:
   enabled: true

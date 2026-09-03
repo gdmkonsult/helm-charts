@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
       - name: worker
-        image: "{{ .Values.worker.image.repository }}:{{ .Values.worker.image.tag }}"
+        image: {{ include "eneo.image" (dict "context" . "image" .Values.worker.image) | quote }}
         imagePullPolicy: {{ .Values.worker.image.pullPolicy }}
         env:
         - name: RUN_AS_WORKER

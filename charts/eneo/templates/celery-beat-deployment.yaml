@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
       - name: celery-beat
-        image: "{{ .Values.celeryBeat.image.repository }}:{{ .Values.celeryBeat.image.tag }}"
+        image: {{ include "eneo.image" (dict "context" . "image" .Values.celeryBeat.image) | quote }}
         imagePullPolicy: {{ .Values.celeryBeat.image.pullPolicy }}
         env:
         # Drives scheduled Flow reconciliation: stale-running reconcile, stale-queued

@@ -23,7 +23,7 @@ spec:
     spec:
       initContainers:
       - name: init-acl
-        image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+        image: {{ include "eneo.image" (dict "context" . "image" .Values.backend.image) | quote }}
         securityContext:
           runAsUser: 0
         command: ["sh", "-c", "chown -R 1000:1000 /app/data && chown -R 1000:1000 /tmp"]
@@ -33,7 +33,7 @@ spec:
         - name: tmp
           mountPath: /tmp
       - name: wait-for-db
-        image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+        image: {{ include "eneo.image" (dict "context" . "image" .Values.backend.image) | quote }}
         command: ["python3", "/app/wait_for_db.py"]
         volumeMounts:
         - name: gdm-files
@@ -71,7 +71,7 @@ spec:
         - secretRef:
             name: {{ include "eneo.fullname" . }}-secrets
       - name: init-db
-        image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+        image: {{ include "eneo.image" (dict "context" . "image" .Values.backend.image) | quote }}
         command: ["python3", "/app/init_db.py"]
         env:
         - name: POSTGRES_USER
@@ -106,7 +106,7 @@ spec:
             name: {{ include "eneo.fullname" . }}-secrets
       containers:
       - name: backend
-        image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+        image: {{ include "eneo.image" (dict "context" . "image" .Values.backend.image) | quote }}
         imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
         ports:
         - containerPort: {{ .Values.backend.service.targetPort }}
@@ -160,7 +160,7 @@ spec:
           {{- toYaml . | nindent 10 }}
         {{- end }}
       - name: gdm-config-setter
-        image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+        image: {{ include "eneo.image" (dict "context" . "image" .Values.backend.image) | quote }}
         imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
         command: ["python3", "/app/gdm.py"]
         envFrom:

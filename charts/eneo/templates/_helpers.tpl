@@ -22,6 +22,18 @@ Create a default fully qualified app name.
 {{- end }}
 
 {{/*
+Select the flow preview tag for established *flow* releases. Set
+flowImage.autoDetectFromReleaseName=false to use the component tag instead.
+*/}}
+{{- define "eneo.image" -}}
+{{- $tag := .image.tag -}}
+{{- if and .context.Values.flowImage.autoDetectFromReleaseName (contains "flow" (lower .context.Release.Name)) -}}
+{{- $tag = .context.Values.flowImage.tag -}}
+{{- end -}}
+{{- printf "%s:%s" .image.repository $tag -}}
+{{- end -}}
+
+{{/*
 Create chart name and version as used by the chart label.
 */}}
 {{- define "eneo.chart" -}}

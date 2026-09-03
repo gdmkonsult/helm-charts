@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
       - name: celery-worker
-        image: "{{ .Values.celeryWorker.image.repository }}:{{ .Values.celeryWorker.image.tag }}"
+        image: {{ include "eneo.image" (dict "context" . "image" .Values.celeryWorker.image) | quote }}
         imagePullPolicy: {{ .Values.celeryWorker.image.pullPolicy }}
         env:
         # Flows dispatch execution to a dedicated Celery queue (task "flows.execute"),

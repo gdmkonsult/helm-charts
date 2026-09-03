@@ -23,7 +23,7 @@ spec:
     spec:
       initContainers:
       - name: wait-for-db
-        image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+        image: {{ include "eneo.image" (dict "context" . "image" .Values.backend.image) | quote }}
         command: ["python3", "/app/wait_for_db.py"]
         volumeMounts:
         - name: gdm-files
@@ -62,7 +62,7 @@ spec:
             name: {{ include "eneo.fullname" . }}-secrets
       containers:
       - name: frontend
-        image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"
+        image: {{ include "eneo.image" (dict "context" . "image" .Values.frontend.image) | quote }}
         imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
         ports:
         - containerPort: {{ .Values.frontend.service.targetPort }}
