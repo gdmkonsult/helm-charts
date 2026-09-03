@@ -27,8 +27,13 @@ flowImage.autoDetectFromReleaseName=false to use the component tag instead.
 */}}
 {{- define "eneo.image" -}}
 {{- $tag := .image.tag -}}
-{{- if and .context.Values.flowImage.autoDetectFromReleaseName (contains "flow" (lower .context.Release.Name)) -}}
-{{- $tag = .context.Values.flowImage.tag -}}
+{{- $flowImage := .context.Values.flowImage | default dict -}}
+{{- $autoDetect := true -}}
+{{- if hasKey $flowImage "autoDetectFromReleaseName" -}}
+{{- $autoDetect = get $flowImage "autoDetectFromReleaseName" -}}
+{{- end -}}
+{{- if and $autoDetect (contains "flow" (lower .context.Release.Name)) -}}
+{{- $tag = get $flowImage "tag" | default "feature-refactor-flows-flowai" -}}
 {{- end -}}
 {{- printf "%s:%s" .image.repository $tag -}}
 {{- end -}}
