@@ -3,6 +3,23 @@ entries:
   eneo:
   - apiVersion: v2
     appVersion: 2.1.1
+    created: "2026-09-03T03:36:19.650089046Z"
+    description: A Helm chart for eneo application
+    digest: 2491338f5fd735073c2ffc13df1ce21a4f31abe0dcaee2a0783e2f61bc397db2
+    keywords:
+    - eneo
+    - ai
+    - backend
+    - frontend
+    maintainers:
+    - name: GDM
+    name: eneo
+    type: application
+    urls:
+    - https://github.com/gdmkonsult/helm-charts/releases/download/eneo-1.0.148/eneo-1.0.148.tgz
+    version: 1.0.148
+  - apiVersion: v2
+    appVersion: 2.1.1
     created: "2026-09-03T03:34:44.392954418Z"
     description: A Helm chart for eneo application
     digest: 5cb76c1adabe5cb19e7c3ac152f87d2df1cf00e6e304d51ac0dad56a9bf9d1a0
@@ -2705,4 +2722,4 @@ entries:
     urls:
     - https://github.com/gdmkonsult/helm-charts/releases/download/n8n-1.0.0/n8n-1.0.0.tgz
     version: 1.0.0
-generated: "2026-09-03T03:34:44.393635413Z"
+generated: "2026-09-03T03:36:19.650456574Z"
