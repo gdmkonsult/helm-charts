@@ -40,6 +40,9 @@ data:
   UPLOAD_IMAGE_TO_SESSION_MAX_SIZE: {{ .Values.config.uploadImageToSessionMaxSize | quote }}
   UPLOAD_MAX_FILE_SIZE: {{ .Values.config.uploadMaxFileSize | quote }}
   TRANSCRIPTION_MAX_FILE_SIZE: {{ .Values.config.transcriptionMaxFileSize | quote }}
+  {{- if and (hasKey .Values.config "flowTranscriptionServiceUrl") .Values.config.flowTranscriptionServiceUrl }}
+  FLOW_TRANSCRIPTION_SERVICE_URL: {{ .Values.config.flowTranscriptionServiceUrl | quote }}
+  {{- end }}
   MAX_IN_QUESTION: {{ .Values.config.maxInQuestion | quote }}
   CRAWL_MAX_LENGTH: {{ .Values.config.crawlMaxLength | quote }}
   CRAWL_PAGE_BATCH_SIZE: {{ .Values.config.crawlPageBatchSize | quote }}

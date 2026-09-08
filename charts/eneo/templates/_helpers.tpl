@@ -22,20 +22,12 @@ Create a default fully qualified app name.
 {{- end }}
 
 {{/*
-Select the flow preview tag for established *flow* releases. Set
-flowImage.autoDetectFromReleaseName=false to use the component tag instead.
+Image tag always comes from Chart.yaml's appVersion, not per-component values -
+this is the single source of truth for which channel (stable release or a
+flow preview branch) a release runs, so it can't be tied to naming pods/releases.
 */}}
 {{- define "eneo.image" -}}
-{{- $tag := .image.tag -}}
-{{- $flowImage := .context.Values.flowImage | default dict -}}
-{{- $autoDetect := true -}}
-{{- if hasKey $flowImage "autoDetectFromReleaseName" -}}
-{{- $autoDetect = get $flowImage "autoDetectFromReleaseName" -}}
-{{- end -}}
-{{- if and $autoDetect (contains "flow" (lower .context.Release.Name)) -}}
-{{- $tag = get $flowImage "tag" | default "feature-refactor-flows-flowai" -}}
-{{- end -}}
-{{- printf "%s:%s" .image.repository $tag -}}
+{{- printf "%s:%s" .image.repository .context.Chart.AppVersion -}}
 {{- end -}}
 
 {{/*
