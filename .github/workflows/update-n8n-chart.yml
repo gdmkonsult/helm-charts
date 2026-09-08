@@ -1,0 +1,107 @@
+name: Update n8n Chart
+
+on:
+  schedule:
+    # Poll every 15 minutes
+    - cron: "0/15 * * * *"
+  workflow_dispatch:
+    inputs:
+      app_version:
+        description: "Override version (e.g. 1.68.0). Leave empty to auto-detect latest."
+        required: false
+
+jobs:
+  update-chart:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for new n8n release
+        id: version
+        run: |
+          # Get the latest real stable release from the n8n-io/n8n repo (public API, no auth needed).
+          # n8n also publishes floating "beta"/"stable" tags that get overwritten in place and
+          # occasional prereleases - only match real semver releases tagged "n8n@X.Y.Z".
+          LATEST=$(curl -sf https://api.github.com/repos/n8n-io/n8n/releases \
+            | jq -r '[.[] | select(.draft | not) | select(.prerelease | not) | select(.tag_name | test("^n8n@[0-9]+\\.[0-9]+\\.[0-9]+$"))][0].tag_name // empty')
+
+          if [[ -z "$LATEST" ]]; then
+            echo "Could not fetch latest release from n8n-io/n8n"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Allow manual override
+          if [[ -n "${{ github.event.inputs.app_version }}" ]]; then
+            LATEST="n8n@${{ github.event.inputs.app_version }}"
+          fi
+
+          # Strip leading 'n8n@'
+          APP_VERSION="${LATEST#n8n@}"
+
+          # Read current appVersion from Chart.yaml
+          CURRENT_APP=$(grep '^appVersion:' charts/n8n/Chart.yaml | sed 's/appVersion: *"\(.*\)"/\1/')
+
+          echo "Latest n8n release: ${APP_VERSION}"
+          echo "Current chart appVersion: ${CURRENT_APP}"
+
+          if [[ "$APP_VERSION" == "$CURRENT_APP" ]]; then
+            echo "Already up to date."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          echo "app_version=${APP_VERSION}" >> "$GITHUB_OUTPUT"
+
+          # Bump chart patch version
+          CURRENT=$(grep '^version:' charts/n8n/Chart.yaml | awk '{print $2}')
+          MAJOR=$(echo "$CURRENT" | cut -d. -f1)
+          MINOR=$(echo "$CURRENT" | cut -d. -f2)
+          PATCH=$(echo "$CURRENT" | cut -d. -f3)
+          NEW_PATCH=$((PATCH + 1))
+          CHART_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}"
+          echo "chart_version=${CHART_VERSION}" >> "$GITHUB_OUTPUT"
+
+          echo "Chart version: ${CURRENT} -> ${CHART_VERSION}"
+
+      - name: Update Chart.yaml and values.yaml
+        if: steps.version.outputs.skip != 'true'
+        run: |
+          sed -i "s/^version: .*/version: ${{ steps.version.outputs.chart_version }}/" charts/n8n/Chart.yaml
+          sed -i "s/^appVersion: .*/appVersion: \"${{ steps.version.outputs.app_version }}\"/" charts/n8n/Chart.yaml
+          cat charts/n8n/Chart.yaml
+
+          # Update the shared n8n image tag in values.yaml (main/runner/worker fall back to this
+          # via n8n.mainImage/n8n.runnerImage/n8n.workerImage in _helpers.tpl - only one line to touch).
+          sed -i '/repository: n8nio\/n8n$/{n;s/tag: ".*"/tag: "'"${{ steps.version.outputs.app_version }}"'"/;}' charts/n8n/values.yaml
+          echo "Updated values.yaml image tag:"
+          grep -A1 'repository: n8nio/n8n$' charts/n8n/values.yaml
+
+      - name: Commit and push
+        if: steps.version.outputs.skip != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add charts/n8n/Chart.yaml charts/n8n/values.yaml
+          git diff --cached --quiet && exit 0
+          git commit -m "chore(n8n): bump appVersion to ${{ steps.version.outputs.app_version }} and chart version to ${{ steps.version.outputs.chart_version }}"
+          git push
+
+      - name: Trigger Helm Publish
+        if: steps.version.outputs.skip != 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'helm.yml',
+              ref: 'main',
+            });
