@@ -89,12 +89,16 @@ worker:
       cpu: "100m"
       memory: 512Mi
 
-# Celery worker for Flow execution (feature/refactor-flows-flowai only).
-# Flows dispatch execution to a dedicated Celery queue ("flows.execute"), NOT the
-# ARQ worker above. Without this enabled, flow runs are created and queued but
-# never executed. Safe to run multiple replicas.
+# Celery worker for Flow execution (flow preview branches only, e.g.
+# refactor-flows-tidy-ai-builder). Flows dispatch execution to a dedicated
+# Celery queue ("flows.execute"), NOT the ARQ worker above. The stable
+# eneo-backend run.sh (2.1.1+) does NOT recognize RUN_AS_CELERY_WORKER at all -
+# it falls through to starting a redundant full gunicorn API server instead,
+# wasting resources and adding an extra concurrent "alembic upgrade head"
+# racer on every start/upgrade. Only enable this when appVersion is pinned to
+# a flow preview branch. Safe to run multiple replicas.
 celeryWorker:
-  enabled: true
+  enabled: false
   replicaCount: 1
   image:
     repository: ghcr.io/eneo-ai/eneo-backend
@@ -107,12 +111,15 @@ celeryWorker:
       cpu: "100m"
       memory: 512Mi
 
-# Celery beat scheduler for Flow reconciliation (feature/refactor-flows-flowai only).
-# Required for stale-run reconciliation/redispatch, review-checkpoint expiry, and
-# audit/webhook outbox delivery. This is a scheduler singleton - do not scale beyond
-# 1 replica (chart enforces replicas: 1).
+# Celery beat scheduler for Flow reconciliation (flow preview branches only, e.g.
+# refactor-flows-tidy-ai-builder). Required for stale-run reconciliation/
+# redispatch, review-checkpoint expiry, and audit/webhook outbox delivery. Same
+# caveat as celeryWorker above: stable run.sh ignores RUN_AS_CELERY_BEAT and
+# just runs a redundant API server instead - only enable on a flow preview
+# appVersion. This is a scheduler singleton - do not scale beyond 1 replica
+# (chart enforces replicas: 1).
 celeryBeat:
-  enabled: true
+  enabled: false
   image:
     repository: ghcr.io/eneo-ai/eneo-backend
     pullPolicy: IfNotPresent
