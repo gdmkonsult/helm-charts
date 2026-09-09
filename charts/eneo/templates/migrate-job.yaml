@@ -1,0 +1,111 @@
+{{- if and .Values.backend.enabled .Values.migrationJob.enabled -}}
+# Runs DB migrations exactly once before backend/celery-beat/celery-worker are
+# rolled out, instead of each of them racing to run "alembic upgrade head"
+# concurrently on every start. Helm blocks the upgrade on this Job (with
+# --wait) so a failed/interrupted migration is caught immediately instead of
+# surfacing later as a silent CrashLoopBackOff across three components.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "eneo.fullname" . }}-migrate-{{ .Release.Revision }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "eneo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: migrate
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ .Values.migrationJob.backoffLimit }}
+  activeDeadlineSeconds: {{ .Values.migrationJob.activeDeadlineSeconds }}
+  template:
+    metadata:
+      labels:
+        {{- include "eneo.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: migrate
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+      - name: wait-for-db
+        image: {{ include "eneo.image" (dict "context" . "image" .Values.backend.image) | quote }}
+        command: ["python3", "/app/wait_for_db.py"]
+        volumeMounts:
+        - name: gdm-files
+          mountPath: "/app/wait_for_db.py"
+          subPath: wait_for_db.py
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "eneo.fullname" . }}-postgres-app
+              key: username
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "eneo.fullname" . }}-postgres-app
+              key: password
+        - name: POSTGRES_HOST
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "eneo.fullname" . }}-postgres-app
+              key: host
+        - name: POSTGRES_PORT
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "eneo.fullname" . }}-postgres-app
+              key: port
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "eneo.fullname" . }}-postgres-app
+              key: dbname
+        envFrom:
+        - configMapRef:
+            name: {{ include "eneo.fullname" . }}-config
+        - secretRef:
+            name: {{ include "eneo.fullname" . }}-secrets
+      containers:
+      - name: migrate
+        image: {{ include "eneo.image" (dict "context" . "image" .Values.backend.image) | quote }}
+        command: ["python3", "/app/init_db.py"]
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "eneo.fullname" . }}-postgres-app
+              key: username
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "eneo.fullname" . }}-postgres-app
+              key: password
+        - name: POSTGRES_HOST
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "eneo.fullname" . }}-postgres-app
+              key: host
+        - name: POSTGRES_PORT
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "eneo.fullname" . }}-postgres-app
+              key: port
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "eneo.fullname" . }}-postgres-app
+              key: dbname
+        envFrom:
+        - configMapRef:
+            name: {{ include "eneo.fullname" . }}-config
+        - secretRef:
+            name: {{ include "eneo.fullname" . }}-secrets
+        {{- with .Values.migrationJob.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+      volumes:
+      - name: gdm-files
+        configMap:
+          name: {{ include "eneo.fullname" . }}-files
+{{- end }}

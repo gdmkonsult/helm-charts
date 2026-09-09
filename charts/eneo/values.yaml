@@ -39,6 +39,22 @@ backend:
       cpu: "100m"
       memory: 512Mi
 
+# Runs "alembic upgrade head" exactly once via a pre-install/pre-upgrade Helm
+# hook Job, before backend/celery-beat/celery-worker are rolled out. Prevents
+# the three of them from racing to run the same migration concurrently, and
+# makes `helm upgrade --wait` fail loudly if a migration doesn't complete.
+migrationJob:
+  enabled: true
+  backoffLimit: 3
+  activeDeadlineSeconds: 600
+  resources:
+    limits:
+      cpu: "1"
+      memory: 1Gi
+    requests:
+      cpu: "100m"
+      memory: 256Mi
+
 # Frontend configuration
 frontend:
   enabled: true
