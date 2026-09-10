@@ -25,28 +25,42 @@ jobs:
       - name: Check for new n8n release
         id: version
         run: |
-          # Get the latest real stable release from the n8n-io/n8n repo (public API, no auth needed).
-          # n8n also publishes floating "beta"/"stable" tags that get overwritten in place and
-          # occasional prereleases - only match real semver releases tagged "n8n@X.Y.Z".
-          LATEST=$(curl -sf https://api.github.com/repos/n8n-io/n8n/releases \
-            | jq -r '[.[] | select(.draft | not) | select(.prerelease | not) | select(.tag_name | test("^n8n@[0-9]+\\.[0-9]+\\.[0-9]+$"))][0].tag_name // empty')
+          # Read current appVersion from Chart.yaml first - needed for the downgrade guard below.
+          CURRENT_APP=$(grep '^appVersion:' charts/n8n/Chart.yaml | sed 's/appVersion: *"\(.*\)"/\1/')
 
-          if [[ -z "$LATEST" ]]; then
+          # n8n-io/n8n runs TWO release trains concurrently under the same "n8n@X.Y.Z" tag
+          # pattern: the legacy 1.123.x line (still gets non-prerelease security backports)
+          # and the current 2.x line (mostly tagged prerelease:true while it stabilizes).
+          # The API returns releases sorted by creation time, NOT by version, so naively taking
+          # the first non-draft/non-prerelease match can pick a just-published 1.123.x backport
+          # over the numerically newer 2.x release we're already on - a silent downgrade.
+          # Fix: collect ALL matching stable tags and pick the highest by semver (`sort -V`),
+          # not the most recently created one. per_page=100 to look back far enough past any
+          # interleaved backports on the other track.
+          APP_VERSION=$(curl -sf "https://api.github.com/repos/n8n-io/n8n/releases?per_page=100" \
+            | jq -r '.[] | select(.draft | not) | select(.prerelease | not) | select(.tag_name | test("^n8n@[0-9]+\\.[0-9]+\\.[0-9]+$")) | .tag_name' \
+            | sed 's/^n8n@//' \
+            | sort -V | tail -1)
+
+          if [[ -z "$APP_VERSION" ]]; then
             echo "Could not fetch latest release from n8n-io/n8n"
             echo "skip=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          # Allow manual override
+          # Allow manual override - an explicit human choice, so it bypasses the downgrade guard too.
           if [[ -n "${{ github.event.inputs.app_version }}" ]]; then
-            LATEST="n8n@${{ github.event.inputs.app_version }}"
+            APP_VERSION="${{ github.event.inputs.app_version }}"
+          else
+            # Never let the scheduled poll move appVersion backwards (e.g. onto the older
+            # 1.123.x track). Only proceed if the candidate is strictly newer by semver.
+            HIGHEST=$(printf '%s\n%s\n' "$CURRENT_APP" "$APP_VERSION" | sort -V | tail -1)
+            if [[ "$HIGHEST" != "$APP_VERSION" || "$APP_VERSION" == "$CURRENT_APP" ]]; then
+              echo "Candidate ${APP_VERSION} is not newer than current ${CURRENT_APP} - skipping (refusing downgrade)."
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
           fi
-
-          # Strip leading 'n8n@'
-          APP_VERSION="${LATEST#n8n@}"
-
-          # Read current appVersion from Chart.yaml
-          CURRENT_APP=$(grep '^appVersion:' charts/n8n/Chart.yaml | sed 's/appVersion: *"\(.*\)"/\1/')
 
           echo "Latest n8n release: ${APP_VERSION}"
           echo "Current chart appVersion: ${CURRENT_APP}"
