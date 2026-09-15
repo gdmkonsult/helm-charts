@@ -86,6 +86,12 @@ transcription_models = [
         "hosting": "swe",
         "is_active": True,
     },
+    {
+        "name": "vemsa-diarization",
+        "display_name": "Vemsa - Talaranalys & Diarisering",
+        "hosting": "swe",
+        "is_active": True,
+    },
 ]
 
 def wait_for_health():
