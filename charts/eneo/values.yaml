@@ -1,6 +1,7 @@
 # Global settings
 global:
   domain:
+  timeZone: "Europe/Stockholm"
 
 # Test environment flag - disables database backups when true
 testEnvironment: false

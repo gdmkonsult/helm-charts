@@ -26,6 +26,8 @@ spec:
         image: {{ include "eneo.image" (dict "context" . "image" .Values.celeryWorker.image) | quote }}
         imagePullPolicy: {{ .Values.celeryWorker.image.pullPolicy }}
         env:
+        - name: TZ
+          value: {{ .Values.global.timeZone | quote }}
         # Flows dispatch execution to a dedicated Celery queue (task "flows.execute"),
         # separate from the ARQ worker used for crawl/transcription/etc. Without this
         # process running, flow runs are created and queued but never executed.

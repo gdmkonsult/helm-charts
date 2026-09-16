@@ -26,6 +26,8 @@ spec:
         image: {{ include "eneo.image" (dict "context" . "image" .Values.worker.image) | quote }}
         imagePullPolicy: {{ .Values.worker.image.pullPolicy }}
         env:
+        - name: TZ
+          value: {{ .Values.global.timeZone | quote }}
         - name: RUN_AS_WORKER
           value: "true"
         - name: POSTGRES_USER

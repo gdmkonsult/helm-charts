@@ -40,6 +40,8 @@ spec:
           mountPath: "/app/wait_for_db.py"
           subPath: wait_for_db.py
         env:
+        - name: TZ
+          value: {{ .Values.global.timeZone | quote }}
         - name: POSTGRES_USER
           valueFrom:
             secretKeyRef:
