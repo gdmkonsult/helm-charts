@@ -1,0 +1,122 @@
+name: Update Eneo Flow Chart
+
+# Tracks the Flow preview branch (mutable tag, rebuilt on every push to the
+# branch). This is the Flow counterpart of update-eneo-chart.yml, which tracks
+# stable eneo releases. The two updaters must never fight over Chart.yaml:
+# - update-eneo-chart.yml only bumps appVersion when it differs from the latest
+#   stable release tag (semver), so it leaves a Flow branch appVersion alone.
+# - this workflow only bumps appVersion when the Flow branch head moved, and
+#   always keeps the appVersion pinned to the Flow branch tag.
+on:
+  schedule:
+    # Poll every 15 minutes
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Flow branch to track (default: refactor/flows-tidy-ai-builder)"
+        required: false
+        default: "refactor/flows-tidy-ai-builder"
+
+jobs:
+  update-chart:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for new Flow branch commit
+        id: version
+        run: |
+          BRANCH="${{ github.event.inputs.branch || 'refactor/flows-tidy-ai-builder' }}"
+
+          # Current head SHA of the Flow preview branch (public API, no auth needed)
+          HEAD_SHA=$(curl -sf "https://api.github.com/repos/eneo-ai/eneo/branches/${BRANCH}" \
+            | jq -r '.commit.sha // empty')
+
+          if [[ -z "$HEAD_SHA" ]]; then
+            echo "Could not fetch branch head for ${BRANCH}"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Read current appVersion from Chart.yaml
+          CURRENT_APP=$(grep '^appVersion:' charts/eneo/Chart.yaml | sed 's/appVersion: *"\(.*\)"/\1/')
+
+          # The Flow updater only acts while the chart is pinned to the Flow
+          # branch tag. If someone switched the chart to a stable release, do
+          # nothing here (the stable updater owns the chart in that state).
+          if [[ "$CURRENT_APP" != "refactor-flows-tidy-ai-builder" ]]; then
+            echo "Chart appVersion is '${CURRENT_APP}', not the Flow branch tag - skipping (stable updater owns the chart)."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Store the last-seen branch head SHA in a state file
+          STATE_FILE=".github/eneo-flow-branch-head.txt"
+          LAST_SHA=$(cat "$STATE_FILE" 2>/dev/null || echo "")
+
+          echo "Flow branch head: ${HEAD_SHA}"
+          echo "Last seen head:   ${LAST_SHA:-<none>}"
+
+          if [[ "$HEAD_SHA" == "$LAST_SHA" ]]; then
+            echo "Flow branch unchanged."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Bump chart patch version
+          CURRENT=$(grep '^version:' charts/eneo/Chart.yaml | awk '{print $2}')
+          MAJOR=$(echo "$CURRENT" | cut -d. -f1)
+          MINOR=$(echo "$CURRENT" | cut -d. -f2)
+          PATCH=$(echo "$CURRENT" | cut -d. -f3)
+          NEW_PATCH=$((PATCH + 1))
+          CHART_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}"
+
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          echo "branch=${BRANCH}" >> "$GITHUB_OUTPUT"
+          echo "head_sha=${HEAD_SHA}" >> "$GITHUB_OUTPUT"
+          echo "chart_version=${CHART_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Chart version: ${CURRENT} -> ${CHART_VERSION}"
+
+      - name: Update Chart.yaml
+        if: steps.version.outputs.skip != 'true'
+        run: |
+          sed -i "s/^version: .*/version: ${{ steps.version.outputs.chart_version }}/" charts/eneo/Chart.yaml
+          # appVersion stays pinned to the Flow branch tag - the image tag is
+          # mutable and rebuilt on every push, so only the chart version moves.
+          cat charts/eneo/Chart.yaml
+
+      - name: Update state file
+        if: steps.version.outputs.skip != 'true'
+        run: |
+          mkdir -p .github
+          echo "${{ steps.version.outputs.head_sha }}" > .github/eneo-flow-branch-head.txt
+          cat .github/eneo-flow-branch-head.txt
+
+      - name: Commit and push
+        if: steps.version.outputs.skip != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add charts/eneo/Chart.yaml .github/eneo-flow-branch-head.txt
+          git diff --cached --quiet && exit 0
+          git commit -m "chore(eneo): track Flow branch head ${{ steps.version.outputs.head_sha }} and bump chart version to ${{ steps.version.outputs.chart_version }}"
+          git push
+
+      - name: Trigger Helm Publish
+        if: steps.version.outputs.skip != 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'helm.yml',
+              ref: 'main',
+            });

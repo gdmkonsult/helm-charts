@@ -47,6 +47,15 @@ jobs:
           # Read current appVersion from Chart.yaml
           CURRENT_APP=$(grep '^appVersion:' charts/eneo/Chart.yaml | sed 's/appVersion: *"\(.*\)"/\1/')
 
+          # If the chart is pinned to a Flow preview branch tag, the stable
+          # updater must not touch it - the Flow updater owns the chart in
+          # that state (see update-eneo-flow-chart.yml).
+          if [[ "$CURRENT_APP" != *.* || "$CURRENT_APP" == "refactor-flows-tidy-ai-builder" ]]; then
+            echo "Chart appVersion '${CURRENT_APP}' is not a stable release - skipping (Flow updater owns the chart)."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           echo "Latest eneo release: ${APP_VERSION}"
           echo "Current chart appVersion: ${CURRENT_APP}"
 
