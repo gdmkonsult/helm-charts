@@ -2,8 +2,7 @@ name: Update Eneo Chart
 
 on:
   schedule:
-    # Poll every hour
-    - cron: "0/15 * * * *"
+    - cron: "0 */6 * * *"
   workflow_dispatch:
     inputs:
       app_version:

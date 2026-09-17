@@ -57,9 +57,9 @@ jobs:
             exit 0
           fi
 
-          # Store the last-seen branch head SHA in a state file
-          STATE_FILE=".github/eneo-flow-branch-head.txt"
-          LAST_SHA=$(cat "$STATE_FILE" 2>/dev/null || echo "")
+          # The last-seen branch head SHA is recorded in the commit message of
+          # the most recent tracking commit - no state file needed.
+          LAST_SHA=$(git log --format=%s -30 | grep -o 'track Flow branch head [0-9a-f]\{40\}' | head -1 | awk '{print $NF}' || true)
 
           echo "Flow branch head: ${HEAD_SHA}"
           echo "Last seen head:   ${LAST_SHA:-<none>}"
@@ -92,19 +92,12 @@ jobs:
           # mutable and rebuilt on every push, so only the chart version moves.
           cat charts/eneo/Chart.yaml
 
-      - name: Update state file
-        if: steps.version.outputs.skip != 'true'
-        run: |
-          mkdir -p .github
-          echo "${{ steps.version.outputs.head_sha }}" > .github/eneo-flow-branch-head.txt
-          cat .github/eneo-flow-branch-head.txt
-
       - name: Commit and push
         if: steps.version.outputs.skip != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add charts/eneo/Chart.yaml .github/eneo-flow-branch-head.txt
+          git add charts/eneo/Chart.yaml
           git diff --cached --quiet && exit 0
           git commit -m "chore(eneo): track Flow branch head ${{ steps.version.outputs.head_sha }} and bump chart version to ${{ steps.version.outputs.chart_version }}"
           git push
