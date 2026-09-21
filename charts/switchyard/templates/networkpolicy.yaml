@@ -1,0 +1,92 @@
+{{- if .Values.networkPolicy.enabled -}}
+apiVersion: crd.antrea.io/v1beta1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "switchyard.fullname" . }}-default-deny
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "switchyard.labels" . | nindent 4 }}
+spec:
+  priority: 100
+  tier: application
+  appliedTo:
+    - podSelector:
+        matchLabels:
+          {{- include "switchyard.selectorLabels" . | nindent 10 }}
+  ingress:
+    - action: Drop
+  egress:
+    - action: Drop
+---
+apiVersion: crd.antrea.io/v1beta1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "switchyard.fullname" . }}-allow-dns
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "switchyard.labels" . | nindent 4 }}
+spec:
+  priority: 5
+  tier: application
+  appliedTo:
+    - podSelector:
+        matchLabels:
+          {{- include "switchyard.selectorLabels" . | nindent 10 }}
+  egress:
+    - action: Allow
+      to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ default "kube-system" .Values.networkPolicy.dnsNamespace }}
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: crd.antrea.io/v1beta1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "switchyard.fullname" . }}-allow-ingress-controller
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "switchyard.labels" . | nindent 4 }}
+spec:
+  priority: 10
+  tier: application
+  appliedTo:
+    - podSelector:
+        matchLabels:
+          {{- include "switchyard.selectorLabels" . | nindent 10 }}
+  ingress:
+    - action: Allow
+      from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ default "traefik" .Values.networkPolicy.ingressNamespace }}
+---
+apiVersion: crd.antrea.io/v1beta1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "switchyard.fullname" . }}-allow-egress-external
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "switchyard.labels" . | nindent 4 }}
+spec:
+  priority: 10
+  tier: application
+  appliedTo:
+    - podSelector:
+        matchLabels:
+          {{- include "switchyard.selectorLabels" . | nindent 10 }}
+  egress:
+    - action: Allow
+      to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 80
+{{- end }}

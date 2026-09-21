@@ -1,0 +1,106 @@
+# Global settings
+global:
+  domain: ""
+  testCluster: false
+
+# High Availability: 2 replicas by default
+replicaCount: 2
+
+image:
+  repository: ghcr.io/gdmkonsult/switchyard-server
+  tag: "v0.3.0"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets:
+  - name: pull-secret
+
+# Client Inbound Authentication
+auth:
+  enabled: true
+  apiKey: "" # If empty, auto-generates csk_<random> and preserves across helm upgrades
+  proxyImage:
+    repository: nginx
+    tag: "1.27-alpine"
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 5m
+      memory: 16Mi
+    limits:
+      cpu: 100m
+      memory: 64Mi
+
+# Switchyard Router Configuration
+router:
+  algorithm: "stage_router" # stage_router, auto, passthrough
+  picker: "efficient_first" # efficient_first or capable_first
+  confidenceThreshold: 0.5
+  routeId: "switchyard" # Exposed model identifier that clients request
+
+# Capable Model Tier (Smart / Powerful tier)
+# Provider types: azure_openai, azure_foundry, anthropic, gdm_ai, openai, custom
+capable:
+  provider: "azure_openai"
+  baseUrl: "" # e.g. https://customer.openai.azure.com
+  modelId: "gpt-4o"
+  apiKey: ""
+  apiVersion: "2024-08-01-preview"
+  format: "openai_chat"
+
+# Efficient Model Tier (Fast / Inexpensive tier)
+# Provider types: azure_openai, azure_foundry, anthropic, gdm_ai, openai, custom
+efficient:
+  provider: "azure_foundry"
+  baseUrl: "" # e.g. https://customer-phi4.swedencentral.models.ai.azure.com/v1
+  modelId: "phi-4"
+  apiKey: ""
+  apiVersion: ""
+  format: "openai_chat"
+
+# Extra custom clients, targets, or routes (optional advanced overrides)
+customRoutesToml: ""
+
+service:
+  type: ClusterIP
+  port: 80
+  # targetPort will be 8080 if auth.enabled, 4000 if auth.enabled=false
+
+ingress:
+  enabled: true
+  className: "traefik"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt"
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.priority: "10"
+  tls:
+    enabled: true
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 32Mi
+  limits:
+    cpu: 250m
+    memory: 128Mi
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - switchyard
+          topologyKey: kubernetes.io/hostname
+
+networkPolicy:
+  enabled: true
+  dnsNamespace: kube-system
+  ingressNamespace: traefik
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
