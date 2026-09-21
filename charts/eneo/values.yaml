@@ -268,7 +268,7 @@ config:
   uploadFileToSessionMaxSize: "104857600"
   uploadImageToSessionMaxSize: "104857600"
   uploadMaxFileSize: "209715200"
-  transcriptionMaxFileSize: "209715200"
+  transcriptionMaxFileSize: "314572800"
   # Vemsa external flow transcription & diarization service (e.g. http://vemsa.vemsa.svc.cluster.local:8000)
   flowTranscriptionServiceUrl: ""
   maxInQuestion: "10"
