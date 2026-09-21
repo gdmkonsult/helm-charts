@@ -99,7 +99,7 @@ worker:
 # racer on every start/upgrade. Only enable this when appVersion is pinned to
 # a flow preview branch. Safe to run multiple replicas.
 celeryWorker:
-  enabled: true
+  enabled: false
   replicaCount: 1
   image:
     repository: ghcr.io/eneo-ai/eneo-backend
@@ -120,7 +120,7 @@ celeryWorker:
 # appVersion. This is a scheduler singleton - do not scale beyond 1 replica
 # (chart enforces replicas: 1).
 celeryBeat:
-  enabled: true
+  enabled: false
   image:
     repository: ghcr.io/eneo-ai/eneo-backend
     pullPolicy: IfNotPresent
