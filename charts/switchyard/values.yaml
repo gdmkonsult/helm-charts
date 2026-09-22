@@ -95,7 +95,7 @@ affinity:
 networkPolicy:
   enabled: true
   dnsNamespace: kube-system
-  ingressNamespace: traefik
+  ingressNamespace: kube-system
 
 securityContext:
   runAsNonRoot: true

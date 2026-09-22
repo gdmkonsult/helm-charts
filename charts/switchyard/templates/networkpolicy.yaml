@@ -63,7 +63,12 @@ spec:
       from:
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: {{ default "traefik" .Values.networkPolicy.ingressNamespace }}
+              kubernetes.io/metadata.name: {{ default "kube-system" .Values.networkPolicy.ingressNamespace }}
+        {{- if ne (default "kube-system" .Values.networkPolicy.ingressNamespace) "traefik" }}
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik
+        {{- end }}
 ---
 apiVersion: crd.antrea.io/v1beta1
 kind: NetworkPolicy
