@@ -96,6 +96,7 @@ spec:
 
               cat >> /etc/nginx/conf.d/default.conf <<EOF
                 location / {
+                  default_type application/json;
                   set \$auth_ok 0;
                   if (\$http_authorization = "Bearer ${ROUTER_API_KEY}") {
                     set \$auth_ok 1;
@@ -104,7 +105,6 @@ spec:
                     set \$auth_ok 1;
                   }
                   if (\$auth_ok = 0) {
-                    default_type application/json;
                     return 401 '{"error":{"message":"Incorrect or missing API key","type":"authentication_error","code":"invalid_api_key"}}';
                   }
 
