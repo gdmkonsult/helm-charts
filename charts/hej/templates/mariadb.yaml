@@ -24,8 +24,7 @@ spec:
         - name: mariadb
           image: "{{ .Values.mariadb.image.repository }}:{{ .Values.mariadb.image.tag }}"
           imagePullPolicy: {{ .Values.mariadb.image.pullPolicy }}
-          command:
-            - "mariadbd"
+          args:
             - "--max-allowed-packet=128M"
             - "--innodb-log-file-size=64M"
           env:

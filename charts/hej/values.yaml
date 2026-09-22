@@ -6,6 +6,9 @@ global:
 nameOverride: ""
 fullnameOverride: ""
 
+imagePullSecrets:
+  - name: pull-secret
+
 # MariaDB persistent storage & configuration
 mariadb:
   enabled: true
