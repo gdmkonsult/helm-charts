@@ -37,25 +37,21 @@ router:
   confidenceThreshold: 0.5
   routeId: "switchyard" # Exposed model identifier that clients request
 
-# Capable Model Tier (Smart / Powerful tier)
+# Dynamic models list (supports 1, 2, or infinitely many models)
 # Provider types: azure_openai, azure_foundry, anthropic, gdm_ai, openai, custom
-capable:
-  provider: "azure_openai"
-  baseUrl: "" # e.g. https://customer.openai.azure.com
-  modelId: "gpt-4o"
-  apiKey: ""
-  apiVersion: "2024-08-01-preview"
-  format: "openai_chat"
+models:
+  - id: "gpt-5.6-luna"
+    provider: "azure_foundry"
+    baseUrl: "" # e.g. https://customer-luna.swedencentral.models.ai.azure.com/v1
+    apiKey: ""
+  - id: "gpt-5.6-sol"
+    provider: "azure_openai"
+    baseUrl: "" # e.g. https://customer.openai.azure.com
+    apiKey: ""
 
-# Efficient Model Tier (Fast / Inexpensive tier)
-# Provider types: azure_openai, azure_foundry, anthropic, gdm_ai, openai, custom
-efficient:
-  provider: "azure_foundry"
-  baseUrl: "" # e.g. https://customer-phi4.swedencentral.models.ai.azure.com/v1
-  modelId: "phi-4"
-  apiKey: ""
-  apiVersion: ""
-  format: "openai_chat"
+# Legacy Capable/Efficient configuration (for backward compatibility)
+capable: {}
+efficient: {}
 
 # Extra custom clients, targets, or routes (optional advanced overrides)
 customRoutesToml: ""
