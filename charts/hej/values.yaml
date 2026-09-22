@@ -1,0 +1,133 @@
+# Global settings
+global:
+  domain: ""
+  testEnvironment: false
+
+nameOverride: ""
+fullnameOverride: ""
+
+# MariaDB persistent storage & configuration
+mariadb:
+  enabled: true
+  image:
+    repository: mariadb
+    tag: "11.2"
+    pullPolicy: IfNotPresent
+  auth:
+    database: ai
+    username: ai
+    password: "" # Auto-generated if empty
+    rootPassword: "" # Auto-generated if empty
+  persistence:
+    enabled: true
+    storageClass: ""
+    size: 10Gi
+  resources:
+    limits:
+      cpu: "2"
+      memory: 2Gi
+    requests:
+      cpu: "100m"
+      memory: 256Mi
+
+# Simoon UI (Frontend & Node/Express Proxy)
+frontend:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: ghcr.io/gdmkonsult/simoon-ui
+    tag: "7.6.1"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 80
+  resources:
+    limits:
+      cpu: "1"
+      memory: 1Gi
+    requests:
+      cpu: "50m"
+      memory: 128Mi
+
+# GDM OpenAI Backend (Quart / Hypercorn Python service)
+backend:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: ghcr.io/gdmkonsult/gdm-openai
+    tag: "7.6.1"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+  persistence:
+    enabled: true
+    storageClass: ""
+    size: 20Gi # For /app/FILES (uploads & temporary project files)
+  resources:
+    limits:
+      cpu: "2"
+      memory: 2Gi
+    requests:
+      cpu: "100m"
+      memory: 256Mi
+
+# Ingress Configuration (Traefik + cert-manager)
+ingress:
+  enabled: true
+  className: ""
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt"
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.priority: "10"
+  tls:
+    enabled: true
+
+# Authentication Settings
+auth:
+  # "v2" uses Keycloak / standard OIDC; "legacy" uses Microsoft Entra ID direct
+  mode: "v2"
+  authority: "" # e.g. https://idp.gdmcloud.se/realms/gdmai or Entra ID tenant
+  clientId: ""  # OIDC Client ID
+  groupId: ""   # Optional group ID filter for legacy auth
+  jwksUri: ""   # Optional custom JWKS URI
+
+# Secrets (auto-generated if empty)
+secrets:
+  cryptrSecret: ""
+  expressSessionSecret: ""
+  consolePassword: ""
+  superPassword: ""
+  hejOverviewPassword: ""
+  adminAllowedIps: "" # Comma-separated IP allowlist for /console & /super
+
+# Upstream AI Provider Settings
+ai:
+  gdmAiApiKey: ""
+  gdmAiEndpoint: "https://ai.gdm.se/api/v1"
+  gdmAiImageEditUrl: ""
+  # Optional Azure Foundry / OpenAI
+  foundryEndpoint: ""
+  foundryKey: ""
+  foundryProjectName: ""
+  foundryLabelModel: ""
+  foundryRefinementModel: ""
+  foundryTtsModel: ""
+  foundryTranscriptionModel: ""
+  instructionChatGeneral: "Du är en hjälpsam assistent."
+  instructionChatLabel: "Ditt jobb är att returnera en lämplig chattetikett för följande konversation. Etiketten bör inte vara längre än 4 ord. Vänligen läs följande användarprompt och tilldela en lämplig etikett för chatten. Svara på det språk som används."
+
+# Custom branding assets (Base64 encoded)
+# If left empty, Simoon UI defaults will be served
+branding:
+  logoBase64: ""
+  backgroundBase64: ""
+
+# SMTP Settings for feedback form
+smtp:
+  host: "smtprelay.gdmnet.se"
+  port: 25
+  secure: false
+  from: "feedback@gdm.se"

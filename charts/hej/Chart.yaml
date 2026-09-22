@@ -1,0 +1,14 @@
+apiVersion: v2
+name: hej
+description: A Helm chart for Hej AI (gdm-openai + simoon-ui + MariaDB)
+type: application
+version: 0.1.0
+appVersion: "7.6.1"
+keywords:
+  - hej
+  - ai
+  - chat
+  - assistant
+  - gdm
+maintainers:
+  - name: GDM

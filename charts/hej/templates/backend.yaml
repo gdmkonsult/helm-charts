@@ -1,0 +1,142 @@
+{{- if .Values.backend.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "hej.fullname" . }}-backend
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hej.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+spec:
+  replicas: {{ .Values.backend.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "hej.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: backend
+  template:
+    metadata:
+      labels:
+        {{- include "hej.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: backend
+    spec:
+      containers:
+        - name: backend
+          image: "{{ .Values.backend.image.repository }}:{{ default .Chart.AppVersion .Values.backend.image.tag }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          env:
+            - name: FLASK_RUN_PORT
+              value: "8080"
+            - name: MYSQL_HOST
+              value: {{ include "hej.mariadbHost" . | quote }}
+            - name: MYSQL_USER
+              value: {{ .Values.mariadb.auth.username | quote }}
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "hej.fullname" . }}-secrets
+                  key: MARIADB_PASSWORD
+            - name: MYSQL_DB
+              value: {{ .Values.mariadb.auth.database | quote }}
+            - name: GDM_AI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "hej.fullname" . }}-secrets
+                  key: GDM_AI_API_KEY
+            - name: GDM_AI_CHAT_COMPLETION_ENDPOINT
+              value: {{ .Values.ai.gdmAiEndpoint | quote }}
+            - name: GDM_AI_IMAGE_EDIT_URL
+              value: {{ .Values.ai.gdmAiImageEditUrl | quote }}
+            - name: FOUNDRY_API_ENDPOINT
+              value: {{ .Values.ai.foundryEndpoint | quote }}
+            - name: FOUNDRY_API_PROJECT_NAME
+              value: {{ .Values.ai.foundryProjectName | quote }}
+            - name: FOUNDRY_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "hej.fullname" . }}-secrets
+                  key: FOUNDRY_API_KEY
+            - name: FOUNDRY_API_LABEL_MODEL
+              value: {{ .Values.ai.foundryLabelModel | quote }}
+            - name: FOUNDRY_API_REFINEMENT_MODEL
+              value: {{ .Values.ai.foundryRefinementModel | quote }}
+            - name: FOUNDRY_API_TTS_MODEL
+              value: {{ .Values.ai.foundryTtsModel | quote }}
+            - name: FOUNDRY_API_TRANSCRIPTION_MODEL
+              value: {{ .Values.ai.foundryTranscriptionModel | quote }}
+            - name: INSTRUCTION_CHAT_GENERAL
+              value: {{ .Values.ai.instructionChatGeneral | quote }}
+            - name: INSTRUCTION_CHAT_LABEL
+              value: {{ .Values.ai.instructionChatLabel | quote }}
+            - name: HEJ_OVERVIEW_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "hej.fullname" . }}-secrets
+                  key: HEJ_OVERVIEW_PASSWORD
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /api/config/status
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /api/config/status
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 20
+            timeoutSeconds: 5
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
+          volumeMounts:
+            - name: backend-files
+              mountPath: /app/FILES
+      volumes:
+        - name: backend-files
+          {{- if .Values.backend.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "hej.fullname" . }}-backend-files
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+---
+{{- if .Values.backend.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "hej.fullname" . }}-backend-files
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hej.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+spec:
+  accessModes: [ "ReadWriteOnce" ]
+  {{- if .Values.backend.persistence.storageClass }}
+  storageClassName: {{ .Values.backend.persistence.storageClass | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.backend.persistence.size }}
+{{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "hej.fullname" . }}-backend
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hej.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+spec:
+  type: {{ .Values.backend.service.type }}
+  ports:
+    - port: {{ .Values.backend.service.port }}
+      targetPort: {{ .Values.backend.service.targetPort }}
+      name: http
+  selector:
+    {{- include "hej.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+{{- end }}

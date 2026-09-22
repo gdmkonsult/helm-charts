@@ -1,0 +1,147 @@
+{{- if .Values.frontend.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "hej.fullname" . }}-frontend
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hej.labels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend
+spec:
+  replicas: {{ .Values.frontend.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "hej.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: frontend
+  template:
+    metadata:
+      labels:
+        {{- include "hej.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: "{{ .Values.frontend.image.repository }}:{{ default .Chart.AppVersion .Values.frontend.image.tag }}"
+          imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
+          env:
+            - name: CANONICAL_URL
+              value: {{ printf "https://%s" .Values.global.domain | quote }}
+            - name: FLASK_URL_OPENAI
+              value: {{ printf "http://%s:8080/api/gpt/prompt_route" (include "hej.backendHost" .) | quote }}
+            - name: MYSQL_HOST
+              value: {{ include "hej.mariadbHost" . | quote }}
+            - name: MYSQL_USER
+              value: {{ .Values.mariadb.auth.username | quote }}
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "hej.fullname" . }}-secrets
+                  key: MARIADB_PASSWORD
+            - name: MYSQL_DB
+              value: {{ .Values.mariadb.auth.database | quote }}
+            - name: AUTH_MODE
+              value: {{ .Values.auth.mode | quote }}
+            - name: AUTH_AUTHORITY
+              value: {{ .Values.auth.authority | quote }}
+            - name: AUTH_CLIENT_ID
+              value: {{ .Values.auth.clientId | quote }}
+            - name: AZURE_AUTHORITY
+              value: {{ .Values.auth.authority | quote }}
+            - name: AZURE_CLIENT_ID
+              value: {{ .Values.auth.clientId | quote }}
+            - name: AZURE_GROUP_ID
+              value: {{ .Values.auth.groupId | quote }}
+            - name: JWKS_URI
+              value: {{ .Values.auth.jwksUri | quote }}
+            - name: EXPRESS_SESSION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "hej.fullname" . }}-secrets
+                  key: EXPRESS_SESSION_SECRET
+            - name: CRYPTR_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "hej.fullname" . }}-secrets
+                  key: CRYPTR_SECRET
+            - name: CONSOLE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "hej.fullname" . }}-secrets
+                  key: CONSOLE_PASSWORD
+            - name: SUPER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "hej.fullname" . }}-secrets
+                  key: SUPER_PASSWORD
+            - name: HEJ_OVERVIEW_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "hej.fullname" . }}-secrets
+                  key: HEJ_OVERVIEW_PASSWORD
+            - name: ADMIN_ALLOWED_IPS
+              value: {{ .Values.secrets.adminAllowedIps | quote }}
+            - name: SMTP_HOST
+              value: {{ .Values.smtp.host | quote }}
+            - name: SMTP_PORT
+              value: {{ .Values.smtp.port | quote }}
+            - name: SMTP_SECURE
+              value: {{ .Values.smtp.secure | quote }}
+            - name: SMTP_FROM
+              value: {{ .Values.smtp.from | quote }}
+          ports:
+            - name: http
+              containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /api/config
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /api/config
+              port: 80
+            initialDelaySeconds: 20
+            periodSeconds: 20
+            timeoutSeconds: 5
+          resources:
+            {{- toYaml .Values.frontend.resources | nindent 12 }}
+          {{- if or .Values.branding.logoBase64 .Values.branding.backgroundBase64 }}
+          volumeMounts:
+            {{- if .Values.branding.logoBase64 }}
+            - name: branding
+              mountPath: /app/dist/logo.png
+              subPath: logo.png
+            {{- end }}
+            {{- if .Values.branding.backgroundBase64 }}
+            - name: branding
+              mountPath: /app/dist/background.webp
+              subPath: background.webp
+            {{- end }}
+          {{- end }}
+      {{- if or .Values.branding.logoBase64 .Values.branding.backgroundBase64 }}
+      volumes:
+        - name: branding
+          secret:
+            secretName: {{ include "hej.fullname" . }}-branding
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "hej.fullname" . }}-frontend
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hej.labels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend
+spec:
+  type: {{ .Values.frontend.service.type }}
+  ports:
+    - port: {{ .Values.frontend.service.port }}
+      targetPort: {{ .Values.frontend.service.targetPort }}
+      name: http
+  selector:
+    {{- include "hej.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend
+{{- end }}
