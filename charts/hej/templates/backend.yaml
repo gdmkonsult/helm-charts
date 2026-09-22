@@ -80,15 +80,13 @@ spec:
             - name: http
               containerPort: 8080
           readinessProbe:
-            httpGet:
-              path: /api/config/status
+            tcpSocket:
               port: 8080
             initialDelaySeconds: 10
-            periodSeconds: 15
+            periodSeconds: 10
             timeoutSeconds: 5
           livenessProbe:
-            httpGet:
-              path: /api/config/status
+            tcpSocket:
               port: 8080
             initialDelaySeconds: 20
             periodSeconds: 20

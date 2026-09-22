@@ -39,7 +39,7 @@ frontend:
   replicaCount: 1
   image:
     repository: ghcr.io/gdmkonsult/simoon-ui
-    tag: "7.6.1"
+    tag: "" # Defaults to .Chart.AppVersion
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
@@ -59,7 +59,7 @@ backend:
   replicaCount: 1
   image:
     repository: ghcr.io/gdmkonsult/gdm-openai
-    tag: "7.6.1"
+    tag: "" # Defaults to .Chart.AppVersion
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
@@ -106,19 +106,18 @@ secrets:
   hejOverviewPassword: ""
   adminAllowedIps: "" # Comma-separated IP allowlist for /console & /super
 
-# Upstream AI Provider Settings
+# Upstream AI Provider Settings (Defaults from GDM Hej production)
 ai:
   gdmAiApiKey: ""
   gdmAiEndpoint: "https://ai.gdm.se/api/v1"
   gdmAiImageEditUrl: ""
-  # Optional Azure Foundry / OpenAI
-  foundryEndpoint: ""
+  foundryEndpoint: "https://gdm-hej-openai-project-resource.services.ai.azure.com"
   foundryKey: ""
-  foundryProjectName: ""
-  foundryLabelModel: ""
-  foundryRefinementModel: ""
-  foundryTtsModel: ""
-  foundryTranscriptionModel: ""
+  foundryProjectName: "gdm-hej-openai-project"
+  foundryLabelModel: "agent-gdm-openai-gpt-4o-mini"
+  foundryRefinementModel: "agent-gdm-openai-gpt-5.6-luna"
+  foundryTtsModel: "agent-gdm-openai-tts"
+  foundryTranscriptionModel: "agent-gdm-openai-whisper"
   instructionChatGeneral: "Du är en hjälpsam assistent."
   instructionChatLabel: "Ditt jobb är att returnera en lämplig chattetikett för följande konversation. Etiketten bör inte vara längre än 4 ord. Vänligen läs följande användarprompt och tilldela en lämplig etikett för chatten. Svara på det språk som används."
 
