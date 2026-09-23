@@ -47,12 +47,14 @@ spec:
                   key: MARIADB_PASSWORD
             - name: MYSQL_DB
               value: {{ .Values.mariadb.auth.database | quote }}
+            {{- if and .Values.auth.mode (ne .Values.auth.mode "legacy") }}
             - name: AUTH_MODE
               value: {{ .Values.auth.mode | quote }}
             - name: AUTH_AUTHORITY
               value: {{ .Values.auth.authority | quote }}
             - name: AUTH_CLIENT_ID
               value: {{ .Values.auth.clientId | quote }}
+            {{- else }}
             - name: AZURE_AUTHORITY
               value: {{ .Values.auth.authority | quote }}
             - name: AZURE_CLIENT_ID
@@ -65,7 +67,8 @@ spec:
                   name: {{ include "hej.fullname" . }}-secrets
                   key: AZURE_CLIENT_SECRET
             - name: JWKS_URI
-              value: {{ .Values.auth.jwksUri | quote }}
+              value: {{ default "https://login.microsoftonline.com/common/discovery/keys" .Values.auth.jwksUri | quote }}
+            {{- end }}
             - name: EXPRESS_SESSION_SECRET
               valueFrom:
                 secretKeyRef:
