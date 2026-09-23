@@ -127,8 +127,22 @@ ai:
   foundryRefinementModel: "agent-gdm-openai-gpt-5.6-luna"
   foundryTtsModel: "agent-gdm-openai-tts"
   foundryTranscriptionModel: "agent-gdm-openai-whisper"
+  # GDM Assistant API
+  gdmAssistantEndpoint: ""
+  gdmAssistantApiKey: ""
+  gdmAssistantLabelModel: ""
+  # GDM N8N Integration
+  gdmN8nUser: ""
+  gdmN8nPass: ""
   instructionChatGeneral: "Du är en hjälpsam assistent."
   instructionChatLabel: "Ditt jobb är att returnera en lämplig chattetikett för följande konversation. Etiketten bör inte vara längre än 4 ord. Vänligen läs följande användarprompt och tilldela en lämplig etikett för chatten. Svara på det språk som används."
+
+# Host aliases for DNS overrides (e.g. internal n8n)
+hostAliases: []
+
+# Extensibility: Additional environment variables & secrets for future needs
+extraEnv: []
+extraSecrets: {}
 
 # Custom branding assets (Base64 encoded)
 # If left empty, Simoon UI defaults will be served

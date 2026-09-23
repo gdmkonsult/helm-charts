@@ -23,6 +23,10 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- with .Values.hostAliases }}
+      hostAliases:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: backend
           image: "{{ .Values.backend.image.repository }}:{{ default .Chart.AppVersion .Values.backend.image.tag }}"
@@ -67,6 +71,22 @@ spec:
               value: {{ .Values.ai.foundryTtsModel | quote }}
             - name: FOUNDRY_API_TRANSCRIPTION_MODEL
               value: {{ .Values.ai.foundryTranscriptionModel | quote }}
+            - name: GDM_ASSISTANT_API_ENDPOINT
+              value: {{ .Values.ai.gdmAssistantEndpoint | quote }}
+            - name: GDM_ASSISTANT_API_LABEL_MODEL
+              value: {{ .Values.ai.gdmAssistantLabelModel | quote }}
+            - name: GDM_ASSISTANT_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "hej.fullname" . }}-secrets
+                  key: GDM_ASSISTANT_API_KEY
+            - name: GDM_N8N_USER
+              value: {{ .Values.ai.gdmN8nUser | quote }}
+            - name: GDM_N8N_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "hej.fullname" . }}-secrets
+                  key: GDM_N8N_PASS
             - name: INSTRUCTION_CHAT_GENERAL
               value: {{ .Values.ai.instructionChatGeneral | quote }}
             - name: INSTRUCTION_CHAT_LABEL
@@ -76,6 +96,9 @@ spec:
                 secretKeyRef:
                   name: {{ include "hej.fullname" . }}-secrets
                   key: HEJ_OVERVIEW_PASSWORD
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
           ports:
             - name: http
               containerPort: 8080
