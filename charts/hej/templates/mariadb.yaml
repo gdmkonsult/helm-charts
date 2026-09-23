@@ -1,6 +1,6 @@
 {{- if .Values.mariadb.enabled -}}
-apiVersion: apps/v1
-kind: StatefulSet
+apiVersion: k8s.mariadb.com/v1alpha1
+kind: MariaDB
 metadata:
   name: {{ include "hej.fullname" . }}-mariadb
   namespace: {{ .Release.Namespace }}
@@ -8,99 +8,28 @@ metadata:
     {{- include "hej.labels" . | nindent 4 }}
     app.kubernetes.io/component: mariadb
 spec:
-  serviceName: {{ include "hej.fullname" . }}-mariadb
   replicas: 1
-  selector:
-    matchLabels:
-      {{- include "hej.selectorLabels" . | nindent 6 }}
-      app.kubernetes.io/component: mariadb
-  template:
-    metadata:
-      labels:
-        {{- include "hej.selectorLabels" . | nindent 8 }}
-        app.kubernetes.io/component: mariadb
-    spec:
-      containers:
-        - name: mariadb
-          image: "{{ .Values.mariadb.image.repository }}:{{ .Values.mariadb.image.tag }}"
-          imagePullPolicy: {{ .Values.mariadb.image.pullPolicy }}
-          args:
-            - "--max-allowed-packet=128M"
-            - "--innodb-log-file-size=64M"
-          env:
-            - name: MARIADB_DATABASE
-              value: {{ .Values.mariadb.auth.database | quote }}
-            - name: MARIADB_USER
-              value: {{ .Values.mariadb.auth.username | quote }}
-            - name: MARIADB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "hej.fullname" . }}-secrets
-                  key: MARIADB_PASSWORD
-            - name: MARIADB_ROOT_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "hej.fullname" . }}-secrets
-                  key: MARIADB_ROOT_PASSWORD
-          ports:
-            - name: mysql
-              containerPort: 3306
-          readinessProbe:
-            exec:
-              command:
-                - "/bin/sh"
-                - "-c"
-                - "mariadb-admin ping -u {{ .Values.mariadb.auth.username }} -p$MARIADB_PASSWORD"
-            initialDelaySeconds: 10
-            periodSeconds: 10
-            timeoutSeconds: 5
-          livenessProbe:
-            exec:
-              command:
-                - "/bin/sh"
-                - "-c"
-                - "mariadb-admin ping -u {{ .Values.mariadb.auth.username }} -p$MARIADB_PASSWORD"
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            timeoutSeconds: 5
-          resources:
-            {{- toYaml .Values.mariadb.resources | nindent 12 }}
-          volumeMounts:
-            - name: data
-              mountPath: /var/lib/mysql
-  {{- if .Values.mariadb.persistence.enabled }}
-  volumeClaimTemplates:
-    - metadata:
-        name: data
-      spec:
-        accessModes: [ "ReadWriteOnce" ]
-        {{- if .Values.mariadb.persistence.storageClass }}
-        storageClassName: {{ .Values.mariadb.persistence.storageClass | quote }}
-        {{- end }}
-        resources:
-          requests:
-            storage: {{ .Values.mariadb.persistence.size }}
-  {{- else }}
-      volumes:
-        - name: data
-          emptyDir: {}
-  {{- end }}
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: {{ include "hej.fullname" . }}-mariadb
-  namespace: {{ .Release.Namespace }}
-  labels:
-    {{- include "hej.labels" . | nindent 4 }}
-    app.kubernetes.io/component: mariadb
-spec:
-  type: ClusterIP
-  ports:
-    - port: 3306
-      targetPort: 3306
-      name: mysql
-  selector:
-    {{- include "hej.selectorLabels" . | nindent 4 }}
-    app.kubernetes.io/component: mariadb
+  image: "{{ .Values.mariadb.image.repository }}:{{ .Values.mariadb.image.tag }}"
+  imagePullPolicy: {{ .Values.mariadb.image.pullPolicy }}
+  port: 3306
+  database: {{ .Values.mariadb.auth.database | quote }}
+  username: {{ .Values.mariadb.auth.username | quote }}
+  passwordSecretKeyRef:
+    name: {{ include "hej.fullname" . }}-secrets
+    key: MARIADB_PASSWORD
+  rootPasswordSecretKeyRef:
+    name: {{ include "hej.fullname" . }}-secrets
+    key: MARIADB_ROOT_PASSWORD
+  storage:
+    size: {{ .Values.mariadb.persistence.size }}
+    {{- if .Values.mariadb.persistence.storageClass }}
+    storageClassName: {{ .Values.mariadb.persistence.storageClass | quote }}
+    {{- end }}
+  myCnf: |
+    [mariadb]
+    bind-address=0.0.0.0
+    max-allowed-packet=128M
+    innodb-log-file-size=64M
+  resources:
+    {{- toYaml .Values.mariadb.resources | nindent 4 }}
 {{- end }}

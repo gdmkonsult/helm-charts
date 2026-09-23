@@ -12,9 +12,10 @@ imagePullSecrets:
 # MariaDB persistent storage & configuration
 mariadb:
   enabled: true
+  # Uses mariadb-operator (k8s.mariadb.com/v1alpha1)
   image:
-    repository: mariadb
-    tag: "11.2"
+    repository: docker-registry1.mariadb.com/library/mariadb
+    tag: "11.4.5"
     pullPolicy: IfNotPresent
   auth:
     database: ai
@@ -32,6 +33,14 @@ mariadb:
     requests:
       cpu: "100m"
       memory: 256Mi
+  backup:
+    enabled: true
+    schedule: "0 2 * * *" # Every night at 02:00
+    retention: "720h"      # 30 days retention
+    s3:
+      bucket: "gdm-rke2-ai-services-hej"
+      endpoint: "rustfs.k8s.gdmcloud.se"
+      region: "us-east-1"
 
 # Simoon UI (Frontend & Node/Express Proxy)
 frontend:

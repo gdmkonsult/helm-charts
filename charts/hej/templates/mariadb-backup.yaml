@@ -1,0 +1,31 @@
+{{- if and .Values.mariadb.enabled .Values.mariadb.backup.enabled (not .Values.global.testEnvironment) -}}
+apiVersion: k8s.mariadb.com/v1alpha1
+kind: Backup
+metadata:
+  name: {{ include "hej.fullname" . }}-mariadb-backup
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hej.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mariadb-backup
+spec:
+  mariaDbRef:
+    name: {{ include "hej.fullname" . }}-mariadb
+  schedule:
+    cron: {{ .Values.mariadb.backup.schedule | quote }}
+    suspend: false
+  maxRetention: {{ .Values.mariadb.backup.retention | quote }}
+  storage:
+    s3:
+      bucket: {{ .Values.mariadb.backup.s3.bucket | quote }}
+      prefix: {{ printf "mariadb/%s" .Release.Namespace | quote }}
+      endpoint: {{ .Values.mariadb.backup.s3.endpoint | quote }}
+      region: {{ .Values.mariadb.backup.s3.region | quote }}
+      accessKeyIdSecretKeyRef:
+        name: {{ include "hej.fullname" . }}-backup-secret
+        key: ACCESS_KEY
+      secretAccessKeySecretKeyRef:
+        name: {{ include "hej.fullname" . }}-backup-secret
+        key: SECRET_KEY
+      tls:
+        enabled: true
+{{- end }}
