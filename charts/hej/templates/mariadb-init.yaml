@@ -1,0 +1,42 @@
+{{- if .Values.mariadb.enabled -}}
+apiVersion: k8s.mariadb.com/v1alpha1
+kind: SqlJob
+metadata:
+  name: {{ include "hej.fullname" . }}-mariadb-init
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hej.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mariadb-init
+spec:
+  mariaDbRef:
+    name: {{ include "hej.fullname" . }}-mariadb
+    waitForIt: true
+  username: {{ .Values.mariadb.auth.username | quote }}
+  passwordSecretKeyRef:
+    name: {{ include "hej.fullname" . }}-secrets
+    key: MARIADB_PASSWORD
+  database: {{ .Values.mariadb.auth.database | quote }}
+  backoffLimit: 10
+  restartPolicy: OnFailure
+  sql: |
+    -- Bootstrap basic app_config if missing
+    INSERT IGNORE INTO app_config (config_key, config_value, description) VALUES
+      ('msal.mode', '\"{{ if and .Values.auth.mode (ne .Values.auth.mode "legacy") }}v2{{ else }}legacy{{ end }}\"', 'MSAL mode'),
+      ('msal.authority', '\"{{ regexFind "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}" .Values.auth.authority | default .Values.auth.authority }}\"', 'MSAL authority'),
+      ('msal.clientId', '\"{{ .Values.auth.clientId }}\"', 'MSAL clientId'),
+      ('settings.applicationTitlePrefix', '\"Hej\"', 'Application title prefix'),
+      ('customer.companyShort', '\"GDM\"', 'Company short name');
+
+    -- Bootstrap default languages if missing
+    INSERT IGNORE INTO app_languages (code, name, is_default, is_fallback, sort_order) VALUES
+      ('sv', 'Svenska', 1, 0, 1),
+      ('en', 'English', 0, 1, 2),
+      ('no', 'Norsk', 0, 0, 3),
+      ('fi', 'Suomi', 0, 0, 4);
+
+    -- Bootstrap a default mode if app_modes is completely empty
+    INSERT INTO app_modes (name, label, model, visible, image_upload, file_upload, gpts, sort_order)
+    SELECT 'GDM_AI_CHAT_COMPLETION__0', 'Assistent', 'gpt-oss-120b', 1, 1, 1, 0, 1
+    FROM DUAL
+    WHERE NOT EXISTS (SELECT 1 FROM app_modes LIMIT 1);
+{{- end }}
