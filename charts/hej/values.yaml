@@ -16,7 +16,7 @@ mariadb:
   image:
     repository: docker-registry1.mariadb.com/library/mariadb
     tag: "11.4.5"
-    pullPolicy: ifNotPresent
+    pullPolicy: IfNotPresent
   auth:
     database: ai
     username: ai
