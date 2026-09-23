@@ -7,6 +7,8 @@ metadata:
     {{- include "eneo.labels" . | nindent 4 }}
 data:
   NODE_ENV: {{ .Values.config.nodeEnv | quote }}
+  ENEO_BACKEND_URL: {{ printf "https://%s" .Values.global.domain | quote }}
+  ENEO_BACKEND_SERVER_URL: "http://{{ include "eneo.fullname" . }}-backend:{{ .Values.backend.service.port }}"
   INTRIC_BACKEND_URL: {{ printf "https://%s" .Values.global.domain | quote }}
   INTRIC_BACKEND_SERVER_URL: "http://{{ include "eneo.fullname" . }}-backend:{{ .Values.backend.service.port }}"
   PUBLIC_INTRIC_BACKEND_URL: {{ printf "https://%s" .Values.global.domain | quote }}
