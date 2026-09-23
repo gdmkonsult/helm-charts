@@ -16,7 +16,7 @@ mariadb:
   image:
     repository: docker-registry1.mariadb.com/library/mariadb
     tag: "11.4.5"
-    pullPolicy: Always
+    pullPolicy: ifNotPresent
   auth:
     database: ai
     username: ai
@@ -49,7 +49,7 @@ frontend:
   image:
     repository: ghcr.io/gdmkonsult/simoon-ui
     tag: "" # Defaults to .Chart.AppVersion
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
   service:
     type: ClusterIP
     port: 80
@@ -69,7 +69,7 @@ backend:
   image:
     repository: ghcr.io/gdmkonsult/gdm-openai
     tag: "" # Defaults to .Chart.AppVersion
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
   service:
     type: ClusterIP
     port: 8080
