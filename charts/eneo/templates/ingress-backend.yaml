@@ -37,6 +37,13 @@ spec:
             name: {{ include "eneo.fullname" . }}-backend
             port:
               number: {{ .Values.backend.service.port }}
+      - path: /scim
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ include "eneo.fullname" . }}-backend
+            port:
+              number: {{ .Values.backend.service.port }}
       - path: /docs
         pathType: Prefix
         backend:
@@ -63,6 +70,13 @@ spec:
     http:
       paths:
       - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ include "eneo.fullname" $ }}-backend
+            port:
+              number: {{ $.Values.backend.service.port }}
+      - path: /scim
         pathType: Prefix
         backend:
           service:
