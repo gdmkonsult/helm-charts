@@ -1,4 +1,4 @@
-INSERT INTO `translations_override` VALUES
+INSERT IGNORE INTO `translations_override` VALUES
 (1,'sv','Assistant','Assistenten','2026-01-13 14:26:38','2026-01-13 14:26:38'),
 (2,'sv','What would you like to chat about today?','Vad vill du chatta om idag?','2026-01-13 14:26:38','2026-01-13 14:26:38'),
 (3,'sv','In this mode, OpenAI\'s \'GPT-4o\' model is applied. The mode enables a fluid and coherent dialogue.','I detta läge tillämpas OpenAIs \"GPT-4o\"-modell. Läget möjliggör en flytande och sammanhängande dialog.','2026-01-13 14:26:38','2026-01-13 14:26:38'),
