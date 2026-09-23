@@ -26,6 +26,7 @@ data:
   OIDC_REDIRECT_GRACE_PERIOD_SECONDS: {{ .Values.config.oidcRedirectGracePeriodSeconds | quote }}
   STRICT_OIDC_REDIRECT_VALIDATION: {{ .Values.config.strictOidcRedirectValidation | quote }}
   OIDC_CLOCK_LEEWAY_SECONDS: {{ .Values.config.oidcClockLeewaySeconds | quote }}
+  FEDERATION_ENABLED: {{ .Values.config.federationPerTenantEnabled | quote }}
   FEDERATION_PER_TENANT_ENABLED: {{ .Values.config.federationPerTenantEnabled | quote }}
   TENANT_CREDENTIALS_ENABLED: {{ .Values.config.tenantCredentialsEnabled | quote }}
   USING_ACCESS_MANAGEMENT: {{ .Values.config.usingAccessManagement | quote }}
@@ -53,6 +54,8 @@ data:
   AUTOTHROTTLE_ENABLED: {{ .Values.config.autothrottleEnabled | quote }}
   AZURE_API_VERSION: {{ .Values.config.azureApiVersion | quote }}
   MIGRATION_AUTO_RECALC_THRESHOLD: {{ .Values.config.migrationAutoRecalcThreshold | quote }}
+  FILE_ICON_BACKFILL_AUTO_INLINE_MAX_BYTES: {{ .Values.config.fileIconBackfillAutoInlineMaxBytes | quote }}
+  FILE_ICON_BACKFILL_INLINE_CAPACITY_ACK: {{ .Values.config.fileIconBackfillInlineCapacityAck | quote }}
   LOGLEVEL: {{ .Values.config.loglevel | quote }}
   LITELLM_DROP_PARAMS: {{ .Values.config.litellmDropParams | quote }}
   DB_POOL_SIZE: {{ .Values.config.dbPoolSize | quote }}

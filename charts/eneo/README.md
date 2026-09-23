@@ -22,6 +22,29 @@ celeryBeat:
 	enabled: false
 ```
 
+### Upgrading to Eneo 2.2
+
+The chart emits both the legacy `INTRIC_BACKEND_*` frontend variables and the
+new `ENEO_BACKEND_*` names so 2.1 and 2.2 images remain supported during the
+transition. It also emits both `FEDERATION_PER_TENANT_ENABLED` and its
+replacement, `FEDERATION_ENABLED`.
+
+Eneo 2.2 introduces a guarded migration for legacy File/Icon content. Existing
+content remains readable while the worker reports `waiting_for_capacity`. Check
+the worker log for the required cumulative bytes, reserve sufficient PostgreSQL
+payload, WAL, and safety headroom, then set the acknowledgement in release
+values to at least the reported number:
+
+```yaml
+config:
+  fileIconBackfillInlineCapacityAck: "<required-bytes>"
+```
+
+Do not raise this value without confirming storage capacity. The default `0`
+intentionally leaves the migration paused. Eneo 2.2 continues to use the ARQ
+worker entrypoint and does not recognize the Flow-only Celery switches, so keep
+`celeryWorker.enabled` and `celeryBeat.enabled` disabled for this release.
+
 ### Flow preview
 
 Set `appVersion` to the Flow preview branch or image tag, for example:

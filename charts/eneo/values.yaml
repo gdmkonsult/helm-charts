@@ -231,6 +231,7 @@ oidc:
   discoveryUrl: ""
   clientId: ""
   clientSecret: ""
+  tenantId: ""
 
 # ConfigMap data§
 config:
@@ -279,6 +280,11 @@ config:
   autothrottleEnabled: "True"
   azureApiVersion: "2024-02-15-preview"
   migrationAutoRecalcThreshold: "30"
+  # Eneo 2.2 File/Icon migration guardrails. Keep the acknowledgement at 0
+  # until the worker reports the required bytes and database/WAL headroom has
+  # been reserved. Existing content remains readable while migration is paused.
+  fileIconBackfillAutoInlineMaxBytes: "5368709120"
+  fileIconBackfillInlineCapacityAck: "0"
   loglevel: "INFO"
   litellmDropParams: "True"
   dbPoolSize: "5"
