@@ -101,6 +101,8 @@ ingress:
     traefik.ingress.kubernetes.io/router.priority: "10"
   tls:
     enabled: true
+  # Additional domains (e.g. legacy <tenant>.ai.gdmcloud.se during migration)
+  extraHosts: []
 
 # Authentication Settings
 auth:
@@ -126,6 +128,10 @@ ai:
   gdmAiApiKey: ""
   gdmAiEndpoint: "https://ai.gdm.se/api/v1"
   gdmAiImageEditUrl: ""
+  # GDM Models (opt-in; auto-provisioned API key via LLM Portal)
+  gdmModels:
+    enabled: false
+    apiKey: ""
   foundryEndpoint: "https://gdm-hej-openai-project-resource.services.ai.azure.com"
   foundryKey: ""
   foundryProjectName: "gdm-hej-openai-project"

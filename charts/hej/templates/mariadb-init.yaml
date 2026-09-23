@@ -69,19 +69,21 @@ data:
     FROM DUAL
     WHERE NOT EXISTS (SELECT 1 FROM app_modes WHERE name = 'FOUNDRY_IMAGE_GENERATION' LIMIT 1);
 
+    {{- if .Values.ai.gdmModels.enabled }}
     INSERT INTO app_modes (
       name, label, img, model, endpoint, api_key, welcome_message, info_text, obs_items,
       visible, image_upload, file_upload, gpts, transcription, sort_order
     )
     SELECT
       'GDM_AI_CHAT_COMPLETION__0', 'Lokal Assistent (GDM AI)', '/modules/chat_green.png', 'gpt-oss-120b',
-      'https://ai.gdm.se/api/v1', '{{ .Values.ai.gdmAiApiKey }}',
+      'https://ai.gdm.se/api/v1', '{{ .Values.ai.gdmModels.apiKey | default .Values.ai.gdmAiApiKey }}',
       'Vad vill du chatta om idag?',
       'Lokal assistent som körs direkt i GDM:s kluster.',
       '[\"Data behandlas lokalt i Sverige.\"]',
-      {{ if .Values.ai.foundryKey }}0{{ else }}1{{ end }}, 1, 1, 0, 0, 3
+      1, 1, 1, 0, 0, 3
     FROM DUAL
     WHERE NOT EXISTS (SELECT 1 FROM app_modes WHERE name = 'GDM_AI_CHAT_COMPLETION__0' LIMIT 1);
+    {{- end }}
 
     -- Bootstrap translations override
     {{- if .Files.Get "files/translations.sql" }}

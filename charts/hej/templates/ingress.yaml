@@ -22,6 +22,9 @@ spec:
   tls:
     - hosts:
         - {{ .Values.global.domain }}
+        {{- range .Values.ingress.extraHosts }}
+        - {{ . }}
+        {{- end }}
       secretName: {{ include "hej.fullname" . }}-tls
   {{- end }}
   rules:
@@ -35,4 +38,16 @@ spec:
                 name: {{ include "hej.fullname" . }}-frontend
                 port:
                   number: {{ .Values.frontend.service.port }}
+    {{- range .Values.ingress.extraHosts }}
+    - host: {{ . }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "hej.fullname" $ }}-frontend
+                port:
+                  number: {{ $.Values.frontend.service.port }}
+    {{- end }}
 {{- end }}
