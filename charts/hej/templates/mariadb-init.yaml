@@ -2,7 +2,7 @@
 apiVersion: k8s.mariadb.com/v1alpha1
 kind: SqlJob
 metadata:
-  name: {{ include "hej.fullname" . }}-mariadb-init
+  name: {{ include "hej.fullname" . }}-mariadb-init-{{ .Release.Revision }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "hej.labels" . | nindent 4 }}
