@@ -103,6 +103,7 @@ auth:
   mode: "v2"
   authority: "" # e.g. https://idp.gdmcloud.se/realms/gdmai or Entra ID tenant
   clientId: ""  # OIDC Client ID
+  clientSecret: "" # OIDC / Entra ID Client Secret
   groupId: ""   # Optional group ID filter for legacy auth
   jwksUri: ""   # Optional custom JWKS URI
 
