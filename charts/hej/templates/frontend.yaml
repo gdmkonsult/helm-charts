@@ -92,7 +92,7 @@ spec:
             - name: HEJ_OVERVIEW_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "hej.fullname" . }}-secrets
+                  name: {{ include "hej.fullname" . }}-overview
                   key: HEJ_OVERVIEW_PASSWORD
             - name: ADMIN_ALLOWED_IPS
               value: {{ .Values.secrets.adminAllowedIps | quote }}
@@ -151,6 +151,9 @@ kind: Service
 metadata:
   name: {{ include "hej.fullname" . }}-frontend
   namespace: {{ .Release.Namespace }}
+  annotations:
+    hej.gdm.se/overview-secret: {{ printf "%s-overview" (include "hej.fullname" .) | quote }}
+    hej.gdm.se/customer: {{ .Values.customer.company | default .Release.Name | quote }}
   labels:
     {{- include "hej.labels" . | nindent 4 }}
     app.kubernetes.io/component: frontend

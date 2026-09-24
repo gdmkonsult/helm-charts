@@ -67,6 +67,10 @@ frontend:
       cpu: "50m"
       memory: 128Mi
 
+overview:
+  serviceAccountName: hej-overview
+  serviceAccountNamespace: gdmai
+
 # GDM OpenAI Backend (Quart / Hypercorn Python service)
 backend:
   enabled: true
