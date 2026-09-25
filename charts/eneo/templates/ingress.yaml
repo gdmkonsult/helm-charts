@@ -20,7 +20,7 @@ spec:
   - hosts:
     - {{ .Values.global.domain }}
     secretName: {{ include "eneo.fullname" . }}-tls
-  {{- range .Values.extraHosts }}
+  {{- range (concat (.Values.extraHosts | default list) (.Values.ingress.extraHosts | default list)) }}
   - hosts:
     - {{ . }}
     secretName: {{ . | replace "." "-" }}-tls
@@ -37,7 +37,7 @@ spec:
             name: {{ include "eneo.fullname" . }}-frontend
             port:
               number: {{ .Values.frontend.service.port }}
-  {{- range .Values.extraHosts }}
+  {{- range (concat (.Values.extraHosts | default list) (.Values.ingress.extraHosts | default list)) }}
   - host: {{ . }}
     http:
       paths:
