@@ -31,7 +31,13 @@ spec:
         pathType: Prefix
         backend:
           service:
+            {{- if and .Values.authProxy.enabled (eq .Values.authProxy.type "oauth2-proxy") }}
+            name: {{ include "n8n.fullname" . }}-auth-proxy
+            port:
+              number: 4180
+            {{- else }}
             name: {{ include "n8n.fullname" . }}-main
             port:
               number: {{ .Values.main.service.port }}
+            {{- end }}
 {{- end }}

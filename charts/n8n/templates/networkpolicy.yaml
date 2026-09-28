@@ -91,6 +91,12 @@ spec:
         matchLabels:
           {{- include "n8n.selectorLabels" . | nindent 10 }}
           app.kubernetes.io/component: main
+    {{- if and .Values.authProxy.enabled (eq .Values.authProxy.type "oauth2-proxy") }}
+    - podSelector:
+        matchLabels:
+          {{- include "n8n.selectorLabels" . | nindent 10 }}
+          app.kubernetes.io/component: auth-proxy
+    {{- end }}
   ingress:
     - action: Allow
       from:

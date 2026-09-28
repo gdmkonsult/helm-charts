@@ -95,6 +95,24 @@ ingress:
   tls:
     enabled: true
 
+# Auth Proxy (Easy Auth style reverse-proxy for Entra ID / Keycloak OIDC)
+authProxy:
+  enabled: false
+  type: "oauth2-proxy"
+  image:
+    repository: "quay.io/oauth2-proxy/oauth2-proxy"
+    tag: "v7.7.1"
+    pullPolicy: "IfNotPresent"
+  oidc:
+    issuerUrl: ""
+    clientId: ""
+    clientSecret: ""
+  cookieSecret: ""
+  allowedEmailDomain: "*"
+  # Regex to skip authentication for specific paths (e.g. external webhooks) if desired
+  # Example: "^/webhook/(external-.*)$"
+  skipAuthRegex: ""
+
 # n8n configuration
 config:
   timezone: "Europe/Stockholm"
