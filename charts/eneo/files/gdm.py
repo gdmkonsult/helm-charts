@@ -329,15 +329,19 @@ def ensure_transcription_models(access_token, provider_id, models):
         model_data = {**model, "provider_id": provider_id}
         name = model["name"]
 
-        if name in existing_by_name:
-            model_id = existing_by_name[name]["id"]
-            print(f"Transcription model '{name}' already exists (id={model_id}), updating...")
-            result = update_transcription_model(access_token, model_id, model_data)
-            print("Updated:", json.dumps(result, indent=2))
-        else:
-            print(f"Transcription model '{name}' not found, creating...")
-            result = create_transcription_model(access_token, model_data)
-            print("Created:", json.dumps(result, indent=2))
+        try:
+            if name in existing_by_name:
+                model_id = existing_by_name[name]["id"]
+                print(f"Transcription model '{name}' already exists (id={model_id}), updating...")
+                result = update_transcription_model(access_token, model_id, model_data)
+                print("Updated:", json.dumps(result, indent=2))
+            else:
+                print(f"Transcription model '{name}' not found, creating...")
+                result = create_transcription_model(access_token, model_data)
+                print("Created:", json.dumps(result, indent=2))
+        except requests.exceptions.HTTPError as e:
+            print(f"Skipping transcription model '{name}' due to API validation error: {e}")
+            continue
 
 
 # ---------------------------------------------------------------------------
@@ -467,10 +471,13 @@ if __name__ == "__main__":
     wait_for_health()
     temp_user_id, access_token = create_temp_admin_user()
     try:
-        provider = ensure_model_provider(access_token, provider_config)
-        ensure_completion_models(access_token, provider["id"], completion_models)
-        ensure_embedding_models(access_token, provider["id"], embedding_models)
-        ensure_transcription_models(access_token, provider["id"], transcription_models)
+        if gdm_config.get("enabled", False):
+            provider = ensure_model_provider(access_token, provider_config)
+            ensure_completion_models(access_token, provider["id"], completion_models)
+            ensure_embedding_models(access_token, provider["id"], embedding_models)
+            ensure_transcription_models(access_token, provider["id"], transcription_models)
+        else:
+            print("GDM models disabled (gdm.json enabled=false), skipping model provisioning.")
 
         if gdm_config.get("enabled", False) and gdm_config.get("mcpEnabled", True):
             setup_mcp(access_token)
