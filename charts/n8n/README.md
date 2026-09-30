@@ -44,6 +44,9 @@ helm install n8n ./charts/n8n \
 | `postgres.enabled` | Enable PostgreSQL | `true` |
 | `postgres.instances` | Number of PostgreSQL instances | `1` |
 | `postgres.database` | Database name | `n8n` |
+| `postgres.workflowDatabase` | Separate workflow database for customer use (empty = disabled) | `n8n_workflow` |
+| `postgres.workflowUser` | Login role owning the workflow database | `n8n_workflow` |
+| `postgres.workflowPassword` | Workflow role password (auto-generated if empty) | `""` |
 | `postgres.storage.size` | PostgreSQL storage size | `20Gi` |
 | `ingress.enabled` | Enable ingress | `true` |
 | `ingress.className` | Ingress class name | `traefik` |
@@ -72,6 +75,22 @@ When `inferens.enabled=true`, you must also set:
 The chart then runs a bootstrap sidecar that logs into n8n and creates/updates an OpenAI-compatible credential pointing at the configured inference endpoint.
 
 If you use llmportal's n8n application form, `mcp.enabled` is also written from the MCP switch. Keep `mcp.enabled` disabled unless inference/GDM models are enabled for the organization.
+
+## Workflow database
+
+The chart provisions a separate PostgreSQL database (`n8n_workflow`) owned by a
+dedicated login role (`n8n_workflow`) alongside n8n's internal database. This
+gives customers credentials they can use from Postgres nodes in n8n workflows
+without access to n8n's own database.
+
+- The password is auto-generated on first install and preserved across upgrades
+  (same mechanism as `secrets.encryptionKey`).
+- A `post-install`/`post-upgrade` hook Job creates the role and database
+  idempotently and keeps the role password in sync with the chart secret.
+- Connection details are published in the `<release>-secrets` Secret under
+  `WORKFLOW_DB_HOST`, `WORKFLOW_DB_PORT`, `WORKFLOW_DB_NAME`,
+  `WORKFLOW_DB_USER` and `WORKFLOW_DB_PASSWORD`.
+- Set `postgres.workflowDatabase: ""` to disable provisioning.
 
 ## Upgrading
 

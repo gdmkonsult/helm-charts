@@ -79,6 +79,27 @@ Generate runner token if not set, but preserve existing value on upgrade
 {{- end -}}
 
 {{/*
+Generate workflow database password if not set, but preserve existing value on
+upgrade. Unlike the helpers above, tolerate an existing secret that predates
+this key (first upgrade to a chart version with workflow database support).
+*/}}
+{{- define "n8n.generateWorkflowPassword" -}}
+{{- $secretName := printf "%s-secrets" (include "n8n.fullname" .context) -}}
+{{- $secret := lookup "v1" "Secret" .context.Release.Namespace $secretName -}}
+{{- $existing := "" -}}
+{{- if $secret -}}
+{{- $existing = index $secret.data "WORKFLOW_DB_PASSWORD" | default "" | b64dec -}}
+{{- end -}}
+{{- if $existing -}}
+{{- $existing -}}
+{{- else if .value -}}
+{{- .value -}}
+{{- else -}}
+{{- randAlphaNum 32 -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Validate required values
 */}}
 {{- define "n8n.validateValues" -}}

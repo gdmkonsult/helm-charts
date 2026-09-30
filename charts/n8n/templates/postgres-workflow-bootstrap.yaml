@@ -1,0 +1,76 @@
+{{- if and .Values.postgres.enabled .Values.postgres.workflowDatabase -}}
+{{- include "n8n.validateValues" . -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "n8n.fullname" . }}-postgres-workflow-bootstrap
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "n8n.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postgres-workflow-bootstrap
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "5"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 6
+  template:
+    metadata:
+      name: {{ include "n8n.fullname" . }}-postgres-workflow-bootstrap
+      labels:
+        {{- include "n8n.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: postgres-workflow-bootstrap
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: bootstrap
+          image: {{ .Values.postgres.imageName }}
+          env:
+            - name: PGHOST
+              value: {{ include "n8n.fullname" . }}-postgres-rw.{{ .Release.Namespace }}.svc.cluster.local
+            - name: PGPORT
+              value: "5432"
+            - name: PGDATABASE
+              value: {{ .Values.postgres.database | quote }}
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "n8n.fullname" . }}-postgres-app
+                  key: username
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "n8n.fullname" . }}-postgres-app
+                  key: password
+            - name: WORKFLOW_DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "n8n.fullname" . }}-secrets
+                  key: WORKFLOW_DB_NAME
+            - name: WORKFLOW_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "n8n.fullname" . }}-secrets
+                  key: WORKFLOW_DB_USER
+            - name: WORKFLOW_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "n8n.fullname" . }}-secrets
+                  key: WORKFLOW_DB_PASSWORD
+          command:
+            - /bin/bash
+            - -ec
+            - |
+              echo "Bootstrapping workflow database '${WORKFLOW_DB_NAME}' and role '${WORKFLOW_DB_USER}'..."
+              psql -v ON_ERROR_STOP=1 \
+                -v db_name="$WORKFLOW_DB_NAME" \
+                -v db_user="$WORKFLOW_DB_USER" \
+                -v db_password="$WORKFLOW_DB_PASSWORD" <<'EOSQL'
+              SELECT format('CREATE ROLE %I LOGIN', :'db_user')
+              WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = :'db_user')\gexec
+              ALTER ROLE :'db_user' LOGIN PASSWORD :'db_password';
+              SELECT format('CREATE DATABASE %I OWNER %I', :'db_name', :'db_user')
+              WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = :'db_name')\gexec
+              EOSQL
+              echo "Workflow database bootstrap completed."
+{{- end }}
