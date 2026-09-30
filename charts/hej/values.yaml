@@ -127,7 +127,7 @@ secrets:
   hejOverviewPassword: ""
   adminAllowedIps: "" # Comma-separated IP allowlist for /console & /super
 
-# Upstream AI Provider Settings (Defaults from GDM Hej production)
+# Upstream AI Provider Settings
 ai:
   gdmAiApiKey: ""
   gdmAiEndpoint: "https://ai.gdm.se/api/v1"
@@ -136,13 +136,13 @@ ai:
   gdmModels:
     enabled: false
     apiKey: ""
-  foundryEndpoint: "https://gdm-hej-openai-project-resource.services.ai.azure.com"
+  foundryEndpoint: ""
   foundryKey: ""
-  foundryProjectName: "gdm-hej-openai-project"
-  foundryLabelModel: "agent-gdm-openai-gpt-4o-mini"
-  foundryRefinementModel: "agent-gdm-openai-gpt-5.6-luna"
-  foundryTtsModel: "agent-gdm-openai-tts"
-  foundryTranscriptionModel: "agent-gdm-openai-whisper"
+  foundryProjectName: ""
+  foundryLabelModel: ""
+  foundryRefinementModel: ""
+  foundryTtsModel: ""
+  foundryTranscriptionModel: ""
   # GDM Assistant API
   gdmAssistantEndpoint: ""
   gdmAssistantApiKey: ""
