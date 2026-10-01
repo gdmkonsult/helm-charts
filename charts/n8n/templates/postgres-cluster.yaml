@@ -16,6 +16,7 @@ spec:
     initdb:
       database: {{ .Values.postgres.database }}
       owner: {{ .Values.postgres.owner }}
+  enableSuperuserAccess: true
   storage:
     size: {{ .Values.postgres.storage.size }}
   postgresql:
