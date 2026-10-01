@@ -35,12 +35,12 @@ spec:
             - name: PGUSER
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "n8n.fullname" . }}-postgres-app
+                  name: {{ include "n8n.fullname" . }}-postgres-superuser
                   key: username
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "n8n.fullname" . }}-postgres-app
+                  name: {{ include "n8n.fullname" . }}-postgres-superuser
                   key: password
             - name: WORKFLOW_DB_NAME
               valueFrom:
