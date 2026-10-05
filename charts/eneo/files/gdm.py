@@ -66,12 +66,31 @@ completion_models = [
         "hosting": "swe",
         "is_active": True,
     },
+    {
+        "name": "glm-5.3-flash",
+        "display_name": "glm-5.3-flash",
+        "token_limit": 1048576,
+        "max_input_tokens": 1048576,
+        "max_output_tokens": 65536,
+        "vision": True,
+        "reasoning": True,
+        "hosting": "swe",
+        "is_active": True,
+    },
 ]
 
 embedding_models = [
     {
         "name": "multilingual-e5-large-instruct",
         "display_name": "multilingual-e5-large-instruct",
+        "family": "e5",
+        "max_input": 512,
+        "hosting": "swe",
+        "is_active": True,
+    },
+    {
+        "name": "multilingual-e5-large",
+        "display_name": "multilingual-e5-large",
         "family": "e5",
         "max_input": 512,
         "hosting": "swe",
@@ -89,6 +108,21 @@ transcription_models = [
     {
         "name": "vemsa-diarization",
         "display_name": "Vemsa - Talaranalys & Diarisering",
+        "hosting": "swe",
+        "is_active": True,
+    },
+]
+
+image_models = [
+    {
+        "name": "flux2-klein-9b",
+        "display_name": "FLUX.2 Klein 9B",
+        "hosting": "swe",
+        "is_active": True,
+    },
+    {
+        "name": "gdm-image",
+        "display_name": "GDM Image",
         "hosting": "swe",
         "is_active": True,
     },
@@ -344,6 +378,45 @@ def ensure_transcription_models(access_token, provider_id, models):
             continue
 
 
+def create_image_model(access_token, model_data):
+    api_url = f"{url}/api/v1/admin/tenant-models/image/"
+    headers = {"Authorization": f"Bearer {access_token}"}
+    response = requests.post(api_url, headers=headers, json=model_data, verify=False)
+    response.raise_for_status()
+    return response.json()
+
+def update_image_model(access_token, model_id, model_data):
+    api_url = f"{url}/api/v1/admin/tenant-models/image/{model_id}/"
+    headers = {"Authorization": f"Bearer {access_token}"}
+    response = requests.put(api_url, headers=headers, json=model_data, verify=False)
+    response.raise_for_status()
+    return response.json()
+
+def ensure_image_models(access_token, provider_id, models):
+    """Create or update image models for the given provider."""
+    ai_models = get_ai_models(access_token)
+    existing_image = ai_models.get("image_models", [])
+    existing_by_name = {m["name"]: m for m in existing_image if m.get("name")}
+
+    for model in models:
+        model_data = {**model, "provider_id": provider_id}
+        name = model["name"]
+
+        try:
+            if name in existing_by_name:
+                model_id = existing_by_name[name]["id"]
+                print(f"Image model '{name}' already exists (id={model_id}), updating...")
+                result = update_image_model(access_token, model_id, model_data)
+                print("Updated:", json.dumps(result, indent=2))
+            else:
+                print(f"Image model '{name}' not found, creating...")
+                result = create_image_model(access_token, model_data)
+                print("Created:", json.dumps(result, indent=2))
+        except requests.exceptions.HTTPError as e:
+            print(f"Skipping image model '{name}' due to API validation error: {e}")
+            continue
+
+
 # ---------------------------------------------------------------------------
 # MCP server provisioning (creates MCP server entry in Eneo)
 # ---------------------------------------------------------------------------
@@ -476,6 +549,7 @@ if __name__ == "__main__":
             ensure_completion_models(access_token, provider["id"], completion_models)
             ensure_embedding_models(access_token, provider["id"], embedding_models)
             ensure_transcription_models(access_token, provider["id"], transcription_models)
+            ensure_image_models(access_token, provider["id"], image_models)
         else:
             print("GDM models disabled (gdm.json enabled=false), skipping model provisioning.")
 
