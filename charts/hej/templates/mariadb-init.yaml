@@ -43,6 +43,15 @@ data:
       ('TemporaryAccessPolicy', 'Welcome!', '[\"Explore and discover the power of our GenAI platform. Take the opportunity to experiment and explore all the possibilities that GenAI offers.\", \"Do not hesitate to contact us if you want tips or need help along the way. Good luck and have fun!\", \"Terms of use: Data is processed in GDMs Swedish data centers and is not used for training. No data is stored unless you have activated the History function. Upon activation, you will get more information about what applies.\"]', 2);
 
     -- Bootstrap default modes (standard Assistant + Image Creator + GDM AI) if app_modes is empty
+    -- image_model was introduced in v7.5.5; older (keycloak-branch) databases lack it
+    SET @has_image_model := (SELECT COUNT(*) FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'app_modes' AND COLUMN_NAME = 'image_model');
+    SET @add_image_model := IF(@has_image_model = 0,
+      'ALTER TABLE app_modes ADD COLUMN image_model VARCHAR(100) NULL AFTER model', 'SELECT 1');
+    PREPARE add_image_model_stmt FROM @add_image_model;
+    EXECUTE add_image_model_stmt;
+    DEALLOCATE PREPARE add_image_model_stmt;
+
     INSERT INTO app_modes (
       name, label, assistant_id, img, welcome_message, info_text, obs_items,
       visible, image_upload, file_upload, gpts, transcription, sort_order
