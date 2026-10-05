@@ -129,20 +129,20 @@ secrets:
 
 # Upstream AI Provider Settings
 ai:
-  gdmAiApiKey: ""
+  gdmAiApiKey: "update-later"
   gdmAiEndpoint: "https://ai.gdm.se/api/v1"
   gdmAiImageEditUrl: ""
   # GDM Models (opt-in; auto-provisioned API key via LLM Portal)
   gdmModels:
     enabled: false
     apiKey: ""
-  foundryEndpoint: ""
-  foundryKey: ""
-  foundryProjectName: ""
-  foundryLabelModel: ""
-  foundryRefinementModel: ""
-  foundryTtsModel: ""
-  foundryTranscriptionModel: ""
+  foundryEndpoint: "not-in-use"
+  foundryKey: "not-in-use"
+  foundryProjectName: "not-in-use"
+  foundryLabelModel: "not-in-use"
+  foundryRefinementModel: "not-in-use"
+  foundryTtsModel: "not-in-use"
+  foundryTranscriptionModel: "not-in-use"
   # GDM Assistant API
   gdmAssistantEndpoint: ""
   gdmAssistantApiKey: ""
