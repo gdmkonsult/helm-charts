@@ -54,6 +54,21 @@ spec:
               value: {{ .Values.ai.gdmAiEndpoint | quote }}
             - name: GDM_AI_IMAGE_EDIT_URL
               value: {{ .Values.ai.gdmAiImageEditUrl | quote }}
+            - name: AZURE_OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "hej.fullname" . }}-secrets
+                  key: AZURE_OPENAI_API_KEY
+            - name: AZURE_OPENAI_API_ENDPOINT
+              value: {{ .Values.ai.azureOpenAiEndpoint | quote }}
+            - name: AZURE_OPENAI_API_MODEL
+              value: {{ .Values.ai.azureOpenAiModel | quote }}
+            - name: AZURE_OPENAI_API_LABEL_MODEL
+              value: {{ .Values.ai.azureOpenAiLabelModel | quote }}
+            - name: AZURE_OPENAI_API_IMAGE_MODEL
+              value: {{ .Values.ai.azureOpenAiImageModel | quote }}
+            - name: AZURE_OPENAI_API_TRANSCRIPTION_MODEL
+              value: {{ .Values.ai.azureOpenAiTranscriptionModel | quote }}
             - name: FOUNDRY_API_ENDPOINT
               value: {{ .Values.ai.foundryEndpoint | quote }}
             - name: FOUNDRY_API_PROJECT_NAME

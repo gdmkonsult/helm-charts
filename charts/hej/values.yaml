@@ -132,6 +132,13 @@ ai:
   gdmAiApiKey: "update-later"
   gdmAiEndpoint: "https://ai.gdm.se/api/v1"
   gdmAiImageEditUrl: ""
+  # Legacy Azure OpenAI provider (required by the keycloak backend image)
+  azureOpenAiKey: ""
+  azureOpenAiEndpoint: ""
+  azureOpenAiModel: ""
+  azureOpenAiLabelModel: ""
+  azureOpenAiImageModel: ""
+  azureOpenAiTranscriptionModel: ""
   # GDM Models (opt-in; auto-provisioned API key via LLM Portal)
   gdmModels:
     enabled: false
