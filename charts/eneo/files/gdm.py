@@ -66,17 +66,6 @@ completion_models = [
         "hosting": "swe",
         "is_active": True,
     },
-    {
-        "name": "glm-5.3-flash",
-        "display_name": "glm-5.3-flash",
-        "token_limit": 1048576,
-        "max_input_tokens": 1048576,
-        "max_output_tokens": 65536,
-        "vision": True,
-        "reasoning": True,
-        "hosting": "swe",
-        "is_active": True,
-    },
 ]
 
 embedding_models = [
