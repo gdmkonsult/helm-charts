@@ -318,15 +318,19 @@ def ensure_embedding_models(access_token, provider_id, models):
         model_data = {**model, "provider_id": provider_id}
         name = model["name"]
 
-        if name in existing_by_name:
-            model_id = existing_by_name[name]["id"]
-            print(f"Embedding model '{name}' already exists (id={model_id}), updating...")
-            result = update_embedding_model(access_token, model_id, model_data)
-            print("Updated:", json.dumps(result, indent=2))
-        else:
-            print(f"Embedding model '{name}' not found, creating...")
-            result = create_embedding_model(access_token, model_data)
-            print("Created:", json.dumps(result, indent=2))
+        try:
+            if name in existing_by_name:
+                model_id = existing_by_name[name]["id"]
+                print(f"Embedding model '{name}' already exists (id={model_id}), updating...")
+                result = update_embedding_model(access_token, model_id, model_data)
+                print("Updated:", json.dumps(result, indent=2))
+            else:
+                print(f"Embedding model '{name}' not found, creating...")
+                result = create_embedding_model(access_token, model_data)
+                print("Created:", json.dumps(result, indent=2))
+        except requests.exceptions.HTTPError as e:
+            print(f"Skipping embedding model '{name}' due to API validation error: {e}")
+            continue
 
 def create_transcription_model(access_token, model_data):
     api_url = f"{url}/api/v1/admin/tenant-models/transcription/"
