@@ -27,6 +27,12 @@ mariadb:
     username: ai
     password: "" # Auto-generated if empty
     rootPassword: "" # Auto-generated if empty
+  init:
+    # Seed the default app_modes (AZURE_FOUNDRY__0, FOUNDRY_IMAGE_GENERATION and,
+    # with ai.gdmModels.enabled, GDM_AI_CHAT_COMPLETION__0) in the init SqlJob.
+    # Set to false for tenants migrated with an existing database so no modes
+    # are added on install or on any later upgrade.
+    seedModes: true
   persistence:
     enabled: true
     storageClass: ""
