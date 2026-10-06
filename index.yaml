@@ -3481,6 +3481,22 @@ entries:
     version: 0.1.0
   n8n:
   - apiVersion: v2
+    appVersion: 2.42.3
+    created: "2026-10-06T12:04:43.420566909Z"
+    description: A Helm chart for n8n workflow automation
+    digest: 7b5a6454dafe17f46c5ded08d41da7aa44ab9e42c2a0b522851ae2151b5e9830
+    keywords:
+    - n8n
+    - automation
+    - workflow
+    maintainers:
+    - name: GDM
+    name: n8n
+    type: application
+    urls:
+    - https://github.com/gdmkonsult/helm-charts/releases/download/n8n-1.0.40/n8n-1.0.40.tgz
+    version: 1.0.40
+  - apiVersion: v2
     appVersion: 2.41.7
     created: "2026-10-05T18:04:16.696549203Z"
     description: A Helm chart for n8n workflow automation
@@ -4221,4 +4237,4 @@ entries:
     urls:
     - https://github.com/gdmkonsult/helm-charts/releases/download/switchyard-0.1.0/switchyard-0.1.0.tgz
     version: 0.1.0
-generated: "2026-10-06T09:48:44.836709209Z"
+generated: "2026-10-06T12:04:43.421933534Z"
