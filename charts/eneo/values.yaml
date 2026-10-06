@@ -243,7 +243,7 @@ config:
   apiKeyHeaderName: "X-API-Key"
   jwtAudience: "*"
   jwtIssuer: "ENEO"
-  jwtExpiryTime: "86400"
+  jwtExpiryTime: "1440"
   jwtAlgorithm: "HS256"
   jwtTokenPrefix: "Bearer"
   oidcStateTtlSeconds: "1800"
