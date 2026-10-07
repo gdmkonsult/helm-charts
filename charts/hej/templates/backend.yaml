@@ -1,3 +1,141 @@
+{{/*
+Backend pod spec. Shared by the Deployment and "hej.backendRolloutToken" so the
+token changes exactly when the backend pod spec does.
+*/}}
+{{- define "hej.backendPodSpec" -}}
+{{- with .Values.imagePullSecrets }}
+imagePullSecrets:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- with .Values.hostAliases }}
+hostAliases:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+containers:
+  - name: backend
+    image: "{{ .Values.backend.image.repository }}:{{ default .Chart.AppVersion .Values.backend.image.tag }}"
+    imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+    env:
+      - name: FLASK_RUN_PORT
+        value: "8080"
+      - name: MYSQL_HOST
+        value: {{ include "hej.mariadbHost" . | quote }}
+      - name: MYSQL_USER
+        value: {{ .Values.mariadb.auth.username | quote }}
+      - name: MYSQL_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: {{ include "hej.fullname" . }}-secrets
+            key: MARIADB_PASSWORD
+      - name: MYSQL_DB
+        value: {{ .Values.mariadb.auth.database | quote }}
+      - name: GDM_AI_API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: {{ include "hej.fullname" . }}-secrets
+            key: GDM_AI_API_KEY
+      - name: GDM_AI_CHAT_COMPLETION_ENDPOINT
+        value: {{ .Values.ai.gdmAiEndpoint | quote }}
+      - name: GDM_AI_IMAGE_EDIT_URL
+        value: {{ .Values.ai.gdmAiImageEditUrl | quote }}
+      - name: AZURE_OPENAI_API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: {{ include "hej.fullname" . }}-secrets
+            key: AZURE_OPENAI_API_KEY
+      - name: AZURE_OPENAI_API_ENDPOINT
+        value: {{ .Values.ai.azureOpenAiEndpoint | quote }}
+      - name: AZURE_OPENAI_API_MODEL
+        value: {{ .Values.ai.azureOpenAiModel | quote }}
+      - name: AZURE_OPENAI_API_LABEL_MODEL
+        value: {{ .Values.ai.azureOpenAiLabelModel | quote }}
+      - name: AZURE_OPENAI_API_IMAGE_MODEL
+        value: {{ .Values.ai.azureOpenAiImageModel | quote }}
+      - name: AZURE_OPENAI_API_TRANSCRIPTION_MODEL
+        value: {{ .Values.ai.azureOpenAiTranscriptionModel | quote }}
+      - name: FOUNDRY_API_ENDPOINT
+        value: {{ .Values.ai.foundryEndpoint | quote }}
+      - name: FOUNDRY_API_PROJECT_NAME
+        value: {{ .Values.ai.foundryProjectName | quote }}
+      - name: FOUNDRY_API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: {{ include "hej.fullname" . }}-secrets
+            key: FOUNDRY_API_KEY
+      - name: FOUNDRY_API_LABEL_MODEL
+        value: {{ .Values.ai.foundryLabelModel | quote }}
+      - name: FOUNDRY_API_REFINEMENT_MODEL
+        value: {{ .Values.ai.foundryRefinementModel | quote }}
+      - name: FOUNDRY_API_TTS_MODEL
+        value: {{ .Values.ai.foundryTtsModel | quote }}
+      - name: FOUNDRY_API_TRANSCRIPTION_MODEL
+        value: {{ .Values.ai.foundryTranscriptionModel | quote }}
+      - name: GDM_ASSISTANT_API_ENDPOINT
+        value: {{ .Values.ai.gdmAssistantEndpoint | quote }}
+      - name: GDM_ASSISTANT_API_LABEL_MODEL
+        value: {{ .Values.ai.gdmAssistantLabelModel | quote }}
+      - name: GDM_ASSISTANT_API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: {{ include "hej.fullname" . }}-secrets
+            key: GDM_ASSISTANT_API_KEY
+      - name: GDM_N8N_USER
+        value: {{ .Values.ai.gdmN8nUser | quote }}
+      - name: GDM_N8N_PASS
+        valueFrom:
+          secretKeyRef:
+            name: {{ include "hej.fullname" . }}-secrets
+            key: GDM_N8N_PASS
+      - name: INSTRUCTION_CHAT_GENERAL
+        value: {{ .Values.ai.instructionChatGeneral | quote }}
+      - name: INSTRUCTION_CHAT_LABEL
+        value: {{ .Values.ai.instructionChatLabel | quote }}
+      - name: HEJ_OVERVIEW_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: {{ include "hej.fullname" . }}-secrets
+            key: HEJ_OVERVIEW_PASSWORD
+      {{- with .Values.extraEnv }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+    ports:
+      - name: http
+        containerPort: 8080
+    # The backend runs DB migrations before it starts listening on 8080, so
+    # allow up to 15 minutes before liveness can restart it mid-migration.
+    startupProbe:
+      tcpSocket:
+        port: 8080
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 90
+    readinessProbe:
+      tcpSocket:
+        port: 8080
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      timeoutSeconds: 5
+    livenessProbe:
+      tcpSocket:
+        port: 8080
+      initialDelaySeconds: 20
+      periodSeconds: 20
+      timeoutSeconds: 5
+    resources:
+      {{- toYaml .Values.backend.resources | nindent 6 }}
+    volumeMounts:
+      - name: backend-files
+        mountPath: /app/FILES
+volumes:
+  - name: backend-files
+    {{- if .Values.backend.persistence.enabled }}
+    persistentVolumeClaim:
+      claimName: {{ include "hej.fullname" . }}-backend-files
+    {{- else }}
+    emptyDir: {}
+    {{- end }}
+{{- end }}
+
 {{- if .Values.backend.enabled -}}
 apiVersion: apps/v1
 kind: Deployment
@@ -9,6 +147,12 @@ metadata:
     app.kubernetes.io/component: backend
 spec:
   replicas: {{ .Values.backend.replicaCount }}
+  # Old and new backends must never run against the same database at once
+  # (migrations run at startup), and backend-files is ReadWriteOnce.
+  # rollingUpdate: null clears the server-side default on existing releases.
+  strategy:
+    type: Recreate
+    rollingUpdate: null
   selector:
     matchLabels:
       {{- include "hej.selectorLabels" . | nindent 6 }}
@@ -18,130 +162,9 @@ spec:
       labels:
         {{- include "hej.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: backend
+        hej.gdm.se/backend-rollout: {{ include "hej.backendRolloutToken" . | quote }}
     spec:
-      {{- with .Values.imagePullSecrets }}
-      imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.hostAliases }}
-      hostAliases:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      containers:
-        - name: backend
-          image: "{{ .Values.backend.image.repository }}:{{ default .Chart.AppVersion .Values.backend.image.tag }}"
-          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
-          env:
-            - name: FLASK_RUN_PORT
-              value: "8080"
-            - name: MYSQL_HOST
-              value: {{ include "hej.mariadbHost" . | quote }}
-            - name: MYSQL_USER
-              value: {{ .Values.mariadb.auth.username | quote }}
-            - name: MYSQL_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "hej.fullname" . }}-secrets
-                  key: MARIADB_PASSWORD
-            - name: MYSQL_DB
-              value: {{ .Values.mariadb.auth.database | quote }}
-            - name: GDM_AI_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "hej.fullname" . }}-secrets
-                  key: GDM_AI_API_KEY
-            - name: GDM_AI_CHAT_COMPLETION_ENDPOINT
-              value: {{ .Values.ai.gdmAiEndpoint | quote }}
-            - name: GDM_AI_IMAGE_EDIT_URL
-              value: {{ .Values.ai.gdmAiImageEditUrl | quote }}
-            - name: AZURE_OPENAI_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "hej.fullname" . }}-secrets
-                  key: AZURE_OPENAI_API_KEY
-            - name: AZURE_OPENAI_API_ENDPOINT
-              value: {{ .Values.ai.azureOpenAiEndpoint | quote }}
-            - name: AZURE_OPENAI_API_MODEL
-              value: {{ .Values.ai.azureOpenAiModel | quote }}
-            - name: AZURE_OPENAI_API_LABEL_MODEL
-              value: {{ .Values.ai.azureOpenAiLabelModel | quote }}
-            - name: AZURE_OPENAI_API_IMAGE_MODEL
-              value: {{ .Values.ai.azureOpenAiImageModel | quote }}
-            - name: AZURE_OPENAI_API_TRANSCRIPTION_MODEL
-              value: {{ .Values.ai.azureOpenAiTranscriptionModel | quote }}
-            - name: FOUNDRY_API_ENDPOINT
-              value: {{ .Values.ai.foundryEndpoint | quote }}
-            - name: FOUNDRY_API_PROJECT_NAME
-              value: {{ .Values.ai.foundryProjectName | quote }}
-            - name: FOUNDRY_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "hej.fullname" . }}-secrets
-                  key: FOUNDRY_API_KEY
-            - name: FOUNDRY_API_LABEL_MODEL
-              value: {{ .Values.ai.foundryLabelModel | quote }}
-            - name: FOUNDRY_API_REFINEMENT_MODEL
-              value: {{ .Values.ai.foundryRefinementModel | quote }}
-            - name: FOUNDRY_API_TTS_MODEL
-              value: {{ .Values.ai.foundryTtsModel | quote }}
-            - name: FOUNDRY_API_TRANSCRIPTION_MODEL
-              value: {{ .Values.ai.foundryTranscriptionModel | quote }}
-            - name: GDM_ASSISTANT_API_ENDPOINT
-              value: {{ .Values.ai.gdmAssistantEndpoint | quote }}
-            - name: GDM_ASSISTANT_API_LABEL_MODEL
-              value: {{ .Values.ai.gdmAssistantLabelModel | quote }}
-            - name: GDM_ASSISTANT_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "hej.fullname" . }}-secrets
-                  key: GDM_ASSISTANT_API_KEY
-            - name: GDM_N8N_USER
-              value: {{ .Values.ai.gdmN8nUser | quote }}
-            - name: GDM_N8N_PASS
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "hej.fullname" . }}-secrets
-                  key: GDM_N8N_PASS
-            - name: INSTRUCTION_CHAT_GENERAL
-              value: {{ .Values.ai.instructionChatGeneral | quote }}
-            - name: INSTRUCTION_CHAT_LABEL
-              value: {{ .Values.ai.instructionChatLabel | quote }}
-            - name: HEJ_OVERVIEW_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "hej.fullname" . }}-secrets
-                  key: HEJ_OVERVIEW_PASSWORD
-            {{- with .Values.extraEnv }}
-            {{- toYaml . | nindent 12 }}
-            {{- end }}
-          ports:
-            - name: http
-              containerPort: 8080
-          readinessProbe:
-            tcpSocket:
-              port: 8080
-            initialDelaySeconds: 10
-            periodSeconds: 10
-            timeoutSeconds: 5
-          livenessProbe:
-            tcpSocket:
-              port: 8080
-            initialDelaySeconds: 20
-            periodSeconds: 20
-            timeoutSeconds: 5
-          resources:
-            {{- toYaml .Values.backend.resources | nindent 12 }}
-          volumeMounts:
-            - name: backend-files
-              mountPath: /app/FILES
-      volumes:
-        - name: backend-files
-          {{- if .Values.backend.persistence.enabled }}
-          persistentVolumeClaim:
-            claimName: {{ include "hej.fullname" . }}-backend-files
-          {{- else }}
-          emptyDir: {}
-          {{- end }}
+      {{- include "hej.backendPodSpec" . | trim | nindent 6 }}
 ---
 {{- if .Values.backend.persistence.enabled }}
 apiVersion: v1
@@ -179,4 +202,25 @@ spec:
   selector:
     {{- include "hej.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: backend
+---
+# Resolves only to ready backend pods of the current pod spec. The frontend's
+# wait-for-backend uses it so it never starts against a previous backend.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "hej.backendCurrentHost" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hej.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+spec:
+  clusterIP: None
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: http
+  selector:
+    {{- include "hej.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+    hej.gdm.se/backend-rollout: {{ include "hej.backendRolloutToken" . | quote }}
 {{- end }}

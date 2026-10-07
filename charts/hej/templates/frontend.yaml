@@ -28,15 +28,18 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       initContainers:
+        # Waits until a backend pod of the CURRENT backend spec is ready. The
+        # backend only listens after its DB migrations, so the frontend never
+        # starts against the old backend or an unmigrated schema.
         - name: wait-for-backend
           image: busybox:1.37
           command:
             - sh
             - -c
             - |
-              echo "Waiting for backend at $BACKEND_HOST:8080..."
+              echo "Waiting for backend rollout $BACKEND_ROLLOUT at $BACKEND_HOST:8080..."
               attempts=0
-              max_attempts=90
+              max_attempts=450
               while [ $attempts -lt $max_attempts ]; do
                 if nc -z "$BACKEND_HOST" 8080 2>/dev/null; then
                   echo "Backend is ready!"
@@ -50,7 +53,10 @@ spec:
               exit 1
           env:
             - name: BACKEND_HOST
-              value: {{ include "hej.backendHost" . | quote }}
+              value: {{ include "hej.backendCurrentHost" . | quote }}
+            # Also restarts the frontend after every backend change.
+            - name: BACKEND_ROLLOUT
+              value: {{ include "hej.backendRolloutToken" . | quote }}
       containers:
         - name: frontend
           image: "{{ .Values.frontend.image.repository }}:{{ default .Chart.AppVersion .Values.frontend.image.tag }}"
