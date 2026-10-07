@@ -30,7 +30,9 @@ for chart in "${charts[@]}"; do
   rm -f "$rendered.err"
 
   # One python pass: classify docs as hook/plain, then flag every resource
-  # referenced FROM a hook that only exists as a plain manifest.
+  # referenced FROM a PRE-install hook that only exists as a plain manifest.
+  # Post-install hooks run AFTER the main manifests are applied, so their
+  # plain-manifest references are safe and excluded.
   report=$(python3 - "$rendered" <<'PYEOF'
 import re, sys
 
@@ -59,8 +61,12 @@ REF = re.compile(
 
 problems = []
 for doc in docs:
-    if not re.search(r"helm\.sh/hook", doc):
+  hook_types = re.search(r"helm\.sh/hook[\"']?\s*:\s*([^\n]+)", doc)
+  if not hook_types:
         continue
+  # Only pre-install/pre-upgrade hooks run before the main manifests.
+  if not re.search(r"\bpre-(install|upgrade|delete)\b", hook_types.group(1)):
+    continue
     self_ident = ident_of(doc)
     for m in REF.finditer(doc):
         ref = m.group(1).strip('"').rstrip("/")
