@@ -4,6 +4,12 @@ kind: ObjectStore
 metadata:
   name: {{ include "eneo.fullname" . }}-backup-store
   namespace: {{ .Release.Namespace }}
+  annotations:
+    # Keep alongside the Cluster hook (weight -20): the Cluster's WAL
+    # archiver plugin references this ObjectStore, so it must exist when the
+    # Cluster is reconciled.
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-20"
 spec:
   retentionPolicy: 3d
   configuration:
