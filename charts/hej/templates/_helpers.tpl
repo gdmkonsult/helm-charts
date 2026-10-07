@@ -61,3 +61,19 @@ Backend host name inside namespace
 {{- define "hej.backendHost" -}}
 {{- printf "%s-backend" (include "hej.fullname" .) }}
 {{- end }}
+
+{{/*
+Headless Service that only resolves to ready backend pods of the current pod
+spec. The frontend waits on it, so a previous backend that is still running
+during an upgrade can't satisfy the wait.
+*/}}
+{{- define "hej.backendCurrentHost" -}}
+{{- printf "%s-backend-current" (include "hej.fullname" .) }}
+{{- end }}
+
+{{/*
+Hash of the backend pod spec (no secret values, only secretKeyRefs).
+*/}}
+{{- define "hej.backendRolloutToken" -}}
+{{- include "hej.backendPodSpec" . | sha256sum | trunc 16 }}
+{{- end }}
