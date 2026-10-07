@@ -2,6 +2,12 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ include "eneo.fullname" . }}-files
+  annotations:
+    # The migrate pre-install hook mounts this ConfigMap, so it must exist
+    # before the hook runs. Hooks run before regular manifests on fresh
+    # installs; weight -10 orders it ahead of the migrate job (weight -5).
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-10"
   labels:
     {{- include "eneo.labels" . | nindent 4 }}
 data:
