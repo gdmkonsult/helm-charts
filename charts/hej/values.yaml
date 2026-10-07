@@ -47,7 +47,7 @@ mariadb:
   backup:
     enabled: true
     schedule: "0 2 * * *" # Every night at 02:00
-    retention: "720h"      # 30 days retention
+    retention: "168h"      # 7 days retention
     s3:
       bucket: "gdm-rke2-ai-services-hej"
       endpoint: "rustfs.k8s.gdmcloud.se"
