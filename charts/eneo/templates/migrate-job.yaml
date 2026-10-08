@@ -13,7 +13,8 @@ metadata:
     {{- include "eneo.labels" . | nindent 4 }}
     app.kubernetes.io/component: migrate
   annotations:
-    "helm.sh/hook": pre-install,pre-upgrade
+    # Upgrade only: on fresh install the config/secret/Cluster don't exist yet; backend init-db migrates instead.
+    "helm.sh/hook": pre-upgrade
     "helm.sh/hook-weight": "-5"
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:

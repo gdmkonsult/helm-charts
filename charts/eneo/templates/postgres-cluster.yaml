@@ -4,17 +4,12 @@ kind: Cluster
 metadata:
   name: {{ include "eneo.fullname" . }}-postgres
   namespace: {{ .Release.Namespace }}
-  annotations:
-    # The migrate job is a pre-install hook (weight -5) that waits for this
-    # database. Hooks run before regular manifests on fresh installs, so the
-    # Cluster must be created first: weight -20 orders it ahead of the
-    # config/secret hooks (-10) and the migrate job (-5). CNPG then creates
-    # the -postgres-app secret and the database while wait_for_db retries.
-    "helm.sh/hook": pre-install,pre-upgrade
-    "helm.sh/hook-weight": "-20"
-    cnpg.io/skipWalArchiving: enabled
   labels:
     {{- include "eneo.labels" . | nindent 4 }}
+  annotations:
+    # Never let Helm delete the database (PVCs cascade, reclaimPolicy Delete).
+    helm.sh/resource-policy: keep
+    cnpg.io/skipWalArchiving: enabled
 spec:
   imageName: {{ .Values.postgres.imageName }}
   instances: {{ .Values.postgres.instances }}
