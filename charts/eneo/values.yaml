@@ -241,6 +241,9 @@ oidc:
   clientId: ""
   clientSecret: ""
   tenantId: ""
+  # Eneo 2.2+: SSO auto account creation (JIT) is refused unless the user's e-mail domain is listed.
+  # The check also applies to existing users, so list every domain your users log in with.
+  allowedDomains: []
 
 # ConfigMap data§
 config:

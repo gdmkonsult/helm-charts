@@ -24,6 +24,7 @@ data:
   OIDC_REDIRECT_GRACE_PERIOD_SECONDS: {{ .Values.config.oidcRedirectGracePeriodSeconds | quote }}
   STRICT_OIDC_REDIRECT_VALIDATION: {{ .Values.config.strictOidcRedirectValidation | quote }}
   OIDC_CLOCK_LEEWAY_SECONDS: {{ .Values.config.oidcClockLeewaySeconds | quote }}
+  OIDC_ALLOWED_DOMAINS: {{ .Values.oidc.allowedDomains | default list | toJson | quote }}
   FEDERATION_ENABLED: {{ .Values.config.federationPerTenantEnabled | quote }}
   FEDERATION_PER_TENANT_ENABLED: {{ .Values.config.federationPerTenantEnabled | quote }}
   TENANT_CREDENTIALS_ENABLED: {{ .Values.config.tenantCredentialsEnabled | quote }}
