@@ -3,6 +3,23 @@ entries:
   eneo:
   - apiVersion: v2
     appVersion: 2.2.0
+    created: "2026-10-08T08:15:22.910864551Z"
+    description: A Helm chart for eneo application
+    digest: c415059fff231d5a3e2d3f81c746682bdd0d2174a6107807220022ef3d01e7f4
+    keywords:
+    - eneo
+    - ai
+    - backend
+    - frontend
+    maintainers:
+    - name: GDM
+    name: eneo
+    type: application
+    urls:
+    - https://github.com/gdmkonsult/helm-charts/releases/download/eneo-1.0.189/eneo-1.0.189.tgz
+    version: 1.0.189
+  - apiVersion: v2
+    appVersion: 2.2.0
     created: "2026-10-08T06:16:46.555751311Z"
     description: A Helm chart for eneo application
     digest: e11ee429bba2e15c401907bf64baef13e3fe8dab0147be4f19ad9bc8d769b914
@@ -3655,6 +3672,22 @@ entries:
   n8n:
   - apiVersion: v2
     appVersion: 2.42.4
+    created: "2026-10-08T08:15:23.076364703Z"
+    description: A Helm chart for n8n workflow automation
+    digest: d9b36f8f92b741cd4e730f28ff17ca06249ca68b9497a7f6a8f1a72265942d4c
+    keywords:
+    - n8n
+    - automation
+    - workflow
+    maintainers:
+    - name: GDM
+    name: n8n
+    type: application
+    urls:
+    - https://github.com/gdmkonsult/helm-charts/releases/download/n8n-1.0.42/n8n-1.0.42.tgz
+    version: 1.0.42
+  - apiVersion: v2
+    appVersion: 2.42.4
     created: "2026-10-07T12:05:06.681992134Z"
     description: A Helm chart for n8n workflow automation
     digest: c83aa01e52f6428f56d309334dfe1d38f1b6173a4416082ffe15b01d23a08669
@@ -4426,4 +4459,4 @@ entries:
     urls:
     - https://github.com/gdmkonsult/helm-charts/releases/download/switchyard-0.1.0/switchyard-0.1.0.tgz
     version: 0.1.0
-generated: "2026-10-08T06:16:46.557887472Z"
+generated: "2026-10-08T08:15:23.077151028Z"
