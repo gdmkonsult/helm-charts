@@ -3,6 +3,23 @@ entries:
   eneo:
   - apiVersion: v2
     appVersion: refactor-flows-tidy-ai-builder
+    created: "2026-10-08T10:45:37.412377033Z"
+    description: A Helm chart for eneo application
+    digest: bf57e079584bdb03530f09ba796a2b0828875d18e31c0be9d53dba8bc0700df2
+    keywords:
+    - eneo
+    - ai
+    - backend
+    - frontend
+    maintainers:
+    - name: GDM
+    name: eneo
+    type: application
+    urls:
+    - https://github.com/gdmkonsult/helm-charts/releases/download/eneo-1.0.192/eneo-1.0.192.tgz
+    version: 1.0.192
+  - apiVersion: v2
+    appVersion: refactor-flows-tidy-ai-builder
     created: "2026-10-08T10:43:33.878751323Z"
     description: A Helm chart for eneo application
     digest: d90d33e0c11eaf3bdc00a850be7433b9f3806bc1554566cdc76429dce32f09a0
@@ -4493,4 +4510,4 @@ entries:
     urls:
     - https://github.com/gdmkonsult/helm-charts/releases/download/switchyard-0.1.0/switchyard-0.1.0.tgz
     version: 0.1.0
-generated: "2026-10-08T10:43:33.879311726Z"
+generated: "2026-10-08T10:45:37.413191014Z"
