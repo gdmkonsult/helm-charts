@@ -1,0 +1,95 @@
+{{- if and .Values.postgres.enabled .Values.postgres.operatorManaged .Values.postgres.snapshotBackup.enabled }}
+{{- $name := printf "%s-backup-prune" (include "eneo.fullname" .) }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "eneo.labels" . | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "eneo.labels" . | nindent 4 }}
+rules:
+  - apiGroups: ["postgresql.cnpg.io"]
+    resources: ["backups"]
+    verbs: ["list", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "eneo.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ $name }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ $name }}
+    namespace: {{ .Release.Namespace }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "eneo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backup-prune
+spec:
+  schedule: "30 3 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/component: backup-prune
+        spec:
+          serviceAccountName: {{ $name }}
+          restartPolicy: OnFailure
+          containers:
+            - name: prune
+              image: {{ include "eneo.image" (dict "context" . "image" .Values.worker.image) | quote }}
+              env:
+                - {name: CLUSTER, value: {{ printf "%s-postgres" (include "eneo.fullname" .) | quote }}}
+                - {name: RETENTION_DAYS, value: {{ .Values.postgres.snapshotBackup.retentionDays | quote }}}
+              command:
+                - python3
+                - -c
+                - |
+                  import json, os, ssl, urllib.request
+                  from datetime import datetime, timedelta, timezone
+                  sa = "/var/run/secrets/kubernetes.io/serviceaccount"
+                  ns, tok = (open(f"{sa}/{f}").read().strip() for f in ("namespace", "token"))
+                  ctx = ssl.create_default_context(cafile=f"{sa}/ca.crt")
+                  base = f"https://kubernetes.default.svc/apis/postgresql.cnpg.io/v1/namespaces/{ns}/backups"
+                  def call(method, url):
+                      req = urllib.request.Request(url, method=method, headers={"Authorization": f"Bearer {tok}"})
+                      return json.load(urllib.request.urlopen(req, context=ctx))
+                  items = [b for b in call("GET", base)["items"]
+                           if b["spec"]["cluster"]["name"] == os.environ["CLUSTER"]
+                           and b["spec"].get("method") == "volumeSnapshot"
+                           and b.get("status", {}).get("phase") == "completed"]
+                  items.sort(key=lambda b: b["status"]["stoppedAt"], reverse=True)
+                  cutoff = datetime.now(timezone.utc) - timedelta(days=int(os.environ["RETENTION_DAYS"]))
+                  for b in items[2:]:  # newest 2 completed backups are never pruned
+                      if datetime.fromisoformat(b["status"]["stoppedAt"].replace("Z", "+00:00")) < cutoff:
+                          call("DELETE", f"{base}/{b['metadata']['name']}")
+                          print("pruned", b["metadata"]["name"], b["status"]["stoppedAt"])
+                  print(f"{len(items)} completed snapshot backups, retention {os.environ['RETENTION_DAYS']}d")
+              resources:
+                requests: {cpu: 10m, memory: 64Mi}
+                limits: {memory: 256Mi}
+{{- end }}

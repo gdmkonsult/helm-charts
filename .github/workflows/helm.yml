@@ -3,10 +3,25 @@ name: Helm Publish
 on:
   push:
     branches: [ 'main' ]
+  pull_request:
   workflow_dispatch:
   
 jobs:
+  safety:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: azure/setup-helm@v4
+      - name: Hooks must be Jobs/Pods and never depend on plain resources
+        run: ./scripts/check-hook-deps.sh
+      - name: Upgrade must not delete stateful resources; CNPG Clusters must be keep
+        run: ./scripts/check-upgrade-safety.sh
+
   release:
+    needs: safety
+    if: github.event_name != 'pull_request'
     permissions:
       contents: write
     runs-on: ubuntu-latest

@@ -161,6 +161,14 @@ redis:
 postgres:
   enabled: true
   operatorManaged: true
+  # CNPG volume-snapshot backups (FlashArray) instead of barman/S3. Restore =
+  # new Cluster with bootstrap.recovery.backup.name. Validated 2026-10-08.
+  snapshotBackup:
+    enabled: false
+    volumeSnapshotClass: px-csi-snapclass
+    schedule: "0 0 */6 * * *"
+    # Prune job deletes older Backups (and their snapshots); newest 2 are always kept.
+    retentionDays: 7
   imageName: ghcr.io/cloudnative-pg/postgresql:16
   instances: 1
   database: eneo

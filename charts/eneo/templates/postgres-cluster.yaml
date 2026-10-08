@@ -39,7 +39,17 @@ spec:
     parameters:
       {{- toYaml .Values.postgres.parameters | nindent 6 }}
   {{- end }}
-  {{- if not (or .Values.global.testCluster .Values.testEnvironment) }}
+  {{- if .Values.postgres.snapshotBackup.enabled }}
+  backup:
+    volumeSnapshot:
+      className: {{ .Values.postgres.snapshotBackup.volumeSnapshotClass }}
+      online: true
+      onlineConfiguration:
+        immediateCheckpoint: true
+        # No WAL archive: the snapshot is atomic and contains pg_wal, so it is self-consistent.
+        waitForArchive: false
+      snapshotOwnerReference: backup
+  {{- else if not (or .Values.global.testCluster .Values.testEnvironment) }}
   plugins:
   - name: barman-cloud.cloudnative-pg.io
     isWALArchiver: true
