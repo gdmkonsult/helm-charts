@@ -168,7 +168,7 @@ postgres:
     volumeSnapshotClass: px-csi-snapclass
     schedule: "0 0 */6 * * *"
     # Prune job deletes older Backups (and their snapshots); newest 2 are always kept.
-    retentionDays: 7
+    retentionDays: 14
   imageName: ghcr.io/cloudnative-pg/postgresql:16
   instances: 1
   database: eneo
