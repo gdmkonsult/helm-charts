@@ -40,12 +40,13 @@ backend:
       cpu: "100m"
       memory: 512Mi
 
-# Runs "alembic upgrade head" exactly once via a pre-install/pre-upgrade Helm
-# hook Job, before backend/celery-beat/celery-worker are rolled out. Prevents
-# the three of them from racing to run the same migration concurrently, and
-# makes `helm upgrade --wait` fail loudly if a migration doesn't complete.
+# Optional pre-upgrade Job running "alembic upgrade head" once before rollout.
+# Off by default: as a pre-upgrade hook it sees the PREVIOUS release's
+# configmap/secret, so config the new app version requires (e.g. Eneo 2.2's
+# JWT_EXPIRY_TIME limit) can never land and the upgrade deadlocks. Backend's
+# init-db container migrates on startup instead.
 migrationJob:
-  enabled: true
+  enabled: false
   backoffLimit: 3
   activeDeadlineSeconds: 600
   resources:
@@ -334,7 +335,6 @@ secrets:
   intricMarketplaceApiKey: ""
   intricMarketplaceUrl: ""
   eneoSuperApiKey: ""
-  eneoSuperDuperApiKey: ""
 
   # OAuth Integration
   oauthCallbackUrl: ""

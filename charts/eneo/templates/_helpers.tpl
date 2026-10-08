@@ -173,24 +173,6 @@ Generate ENEO_SUPER_API_KEY if not set, but preserve existing value on upgrade
 {{- end -}}
 
 {{/*
-Generate ENEO_SUPER_DUPER_API_KEY if not set, but preserve existing value on upgrade
-(also checks legacy INTRIC_SUPER_DUPER_API_KEY for backward compatibility)
-*/}}
-{{- define "eneo.generateEneoSuperDuperApiKey" -}}
-{{- $secretName := printf "%s-secrets" (include "eneo.fullname" .context) -}}
-{{- $secret := lookup "v1" "Secret" .context.Release.Namespace $secretName -}}
-{{- if and $secret (hasKey $secret.data "ENEO_SUPER_DUPER_API_KEY") -}}
-{{- index $secret.data "ENEO_SUPER_DUPER_API_KEY" | b64dec -}}
-{{- else if and $secret (hasKey $secret.data "INTRIC_SUPER_DUPER_API_KEY") -}}
-{{- index $secret.data "INTRIC_SUPER_DUPER_API_KEY" | b64dec -}}
-{{- else if .value -}}
-{{ .value }}
-{{- else -}}
-{{ randAlphaNum 64 }}
-{{- end -}}
-{{- end -}}
-
-{{/*
 Generate DEFAULT_USER_PASSWORD if not set, but preserve existing value on upgrade
 */}}
 {{- define "eneo.generateDefaultUserPassword" -}}
