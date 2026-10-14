@@ -29,6 +29,9 @@ spec:
       - name: celery-beat
         image: {{ include "eneo.image" (dict "context" . "image" .Values.celeryBeat.image) | quote }}
         imagePullPolicy: {{ .Values.celeryBeat.image.pullPolicy }}
+        # run.sh does not handle RUN_AS_CELERY_BEAT and would start gunicorn +
+        # "alembic upgrade head" instead; flow images ship this ARQ entrypoint.
+        command: ["/app/.venv/bin/task-maintenance-worker"]
         env:
         - name: TZ
           value: {{ .Values.global.timeZone | quote }}

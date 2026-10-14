@@ -25,6 +25,9 @@ spec:
       - name: celery-worker
         image: {{ include "eneo.image" (dict "context" . "image" .Values.celeryWorker.image) | quote }}
         imagePullPolicy: {{ .Values.celeryWorker.image.pullPolicy }}
+        # run.sh does not handle RUN_AS_CELERY_WORKER and would start gunicorn +
+        # "alembic upgrade head" instead; flow images ship this ARQ entrypoint.
+        command: ["/app/.venv/bin/task-execution-worker"]
         env:
         - name: TZ
           value: {{ .Values.global.timeZone | quote }}

@@ -47,11 +47,17 @@ worker entrypoint and does not recognize the Flow-only Celery switches, so keep
 
 ### Flow preview
 
-Set `appVersion` to the Flow preview branch or image tag, for example:
+Set `appVersion` to a commit-pinned Flow image tag (`<branch>-<sha7>`), for
+example:
 
 ```yaml
-appVersion: "refactor-flows-tidy-ai-builder"
+appVersion: "feature-flows-and-builder-b798729"
 ```
+
+Do not use the bare branch tag (e.g. `refactor-flows-tidy-ai-builder`): it is
+rebuilt on every push, so nodes that pull it later (rescheduling, node loss)
+silently get a different build than the rest of the release. The
+`feature/flows-and-builder` branch carries Flows on top of develop (2.2+).
 
 Enable both Flow execution processes in the release values:
 
@@ -62,10 +68,20 @@ celeryBeat:
 	enabled: true
 ```
 
-Both are required: `celery-worker` executes the `flows.execute` queue and
-`celery-beat` reconciles stale runs, redispatches, review checkpoints, and
-audit/webhook outbox work. Without them, Flow runs can remain queued or fail to
-self-heal after an interruption.
+Both are required: `celery-worker` runs the image's `task-execution-worker`
+(`flows.execute`) and `celery-beat` runs `task-maintenance-worker`, which
+reconciles stale runs, redispatches, review checkpoints, and audit/webhook
+outbox work. Without them, Flow runs can remain queued or fail to self-heal
+after an interruption. Despite the names they are ARQ processes; the chart sets
+their `command`, since `run.sh` ignores `RUN_AS_CELERY_*`.
+
+Flow images built from develop refuse to start while retired settings differ
+from their old default. Set this in the release values of Flow releases:
+
+```yaml
+config:
+  tenantWorkerSemaphoreTtlSeconds: "39600"
+```
 
 ### Apply a switch
 

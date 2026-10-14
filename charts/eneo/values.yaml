@@ -91,16 +91,14 @@ worker:
       cpu: "100m"
       memory: 512Mi
 
-# Celery worker for Flow execution (flow preview branches only, e.g.
-# refactor-flows-tidy-ai-builder). Flows dispatch execution to a dedicated
-# Celery queue ("flows.execute"), NOT the ARQ worker above. The stable
-# eneo-backend run.sh (2.1.1+) does NOT recognize RUN_AS_CELERY_WORKER at all -
-# it falls through to starting a redundant full gunicorn API server instead,
-# wasting resources and adding an extra concurrent "alembic upgrade head"
-# racer on every start/upgrade. Only enable this when appVersion is pinned to
-# a flow preview branch. Safe to run multiple replicas.
+# Flow execution worker (flow preview branches only, e.g.
+# feature-flows-and-builder-<sha>). Runs the image's task-execution-worker
+# entrypoint (ARQ, "flows.execute"), separate from the general ARQ worker above.
+# Stable images do not ship that entrypoint, so the pod would crash - only
+# enable this when appVersion is pinned to a flow preview branch. Safe to run
+# multiple replicas.
 celeryWorker:
-  enabled: false
+  enabled: true
   replicaCount: 1
   image:
     repository: ghcr.io/eneo-ai/eneo-backend
@@ -113,15 +111,13 @@ celeryWorker:
       cpu: "100m"
       memory: 512Mi
 
-# Celery beat scheduler for Flow reconciliation (flow preview branches only, e.g.
-# refactor-flows-tidy-ai-builder). Required for stale-run reconciliation/
-# redispatch, review-checkpoint expiry, and audit/webhook outbox delivery. Same
-# caveat as celeryWorker above: stable run.sh ignores RUN_AS_CELERY_BEAT and
-# just runs a redundant API server instead - only enable on a flow preview
-# appVersion. This is a scheduler singleton - do not scale beyond 1 replica
-# (chart enforces replicas: 1).
+# Flow maintenance scheduler (flow preview branches only). Runs the image's
+# task-maintenance-worker entrypoint: stale-run reconciliation/redispatch,
+# review-checkpoint expiry, and audit/webhook outbox delivery. Same caveat as
+# celeryWorker above - only enable on a flow preview appVersion. This is a
+# scheduler singleton - do not scale beyond 1 replica (chart enforces replicas: 1).
 celeryBeat:
-  enabled: false
+  enabled: true
   image:
     repository: ghcr.io/eneo-ai/eneo-backend
     pullPolicy: IfNotPresent
