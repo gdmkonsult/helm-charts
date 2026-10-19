@@ -148,6 +148,7 @@ spec:
           resources:
             {{- toYaml (.Values.runner.resources | default $profile.runner.resources) | nindent 12 }}
         {{- end }}
+      terminationGracePeriodSeconds: 300
       restartPolicy: Always
       {{- with .Values.nodeSelector }}
       nodeSelector:

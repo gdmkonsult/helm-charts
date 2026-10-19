@@ -246,6 +246,7 @@ spec:
             - name: setup-scripts
               mountPath: /scripts
         {{- end }}
+      terminationGracePeriodSeconds: 300
       restartPolicy: Always
       {{- with .Values.nodeSelector }}
       nodeSelector:
