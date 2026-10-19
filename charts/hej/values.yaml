@@ -120,7 +120,6 @@ auth:
   mode: "v2"
   authority: "" # e.g. https://idp.gdmcloud.se/realms/gdmai or Entra ID tenant
   clientId: ""  # OIDC Client ID
-  clientSecret: "" # OIDC / Entra ID Client Secret
   groupId: ""   # Optional group ID filter for legacy auth
   jwksUri: ""   # Optional custom JWKS URI
 
@@ -138,13 +137,6 @@ ai:
   gdmAiApiKey: "update-later"
   gdmAiEndpoint: "https://ai.gdm.se/api/v1"
   gdmAiImageEditUrl: ""
-  # Legacy Azure OpenAI provider (required by the keycloak backend image)
-  azureOpenAiKey: ""
-  azureOpenAiEndpoint: ""
-  azureOpenAiModel: ""
-  azureOpenAiLabelModel: ""
-  azureOpenAiImageModel: ""
-  azureOpenAiTranscriptionModel: ""
   # GDM Models (opt-in; auto-provisioned API key via LLM Portal)
   gdmModels:
     enabled: false
@@ -156,10 +148,6 @@ ai:
   foundryRefinementModel: "not-in-use"
   foundryTtsModel: "not-in-use"
   foundryTranscriptionModel: "not-in-use"
-  # GDM Assistant API
-  gdmAssistantEndpoint: ""
-  gdmAssistantApiKey: ""
-  gdmAssistantLabelModel: ""
   # GDM N8N Integration
   gdmN8nUser: ""
   gdmN8nPass: ""

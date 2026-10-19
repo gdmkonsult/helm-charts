@@ -91,11 +91,6 @@ spec:
               value: {{ .Values.auth.clientId | quote }}
             - name: AZURE_GROUP_ID
               value: {{ .Values.auth.groupId | quote }}
-            - name: AZURE_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "hej.fullname" . }}-secrets
-                  key: AZURE_CLIENT_SECRET
             - name: JWKS_URI
               value: {{ default "https://login.microsoftonline.com/common/discovery/keys" .Values.auth.jwksUri | quote }}
             {{- end }}
