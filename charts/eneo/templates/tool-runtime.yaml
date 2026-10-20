@@ -1,0 +1,153 @@
+{{- if .Values.toolRuntime.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "eneo.fullname" . }}-tool-runtime
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "eneo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: tool-runtime
+  annotations:
+    reloader.stakater.com/auto: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "eneo.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: tool-runtime
+  template:
+    metadata:
+      labels:
+        {{- include "eneo.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: tool-runtime
+    spec:
+      automountServiceAccountToken: false
+      # No seccompProfile on purpose: a profile filtering the landlock_* syscalls
+      # silently disables job confinement (REQUIRE_CONFINEMENT then refuses to start).
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+      {{- with .Values.toolRuntime.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: tool-runtime
+        image: {{ include "eneo.image" (dict "context" . "image" .Values.toolRuntime.image) | quote }}
+        imagePullPolicy: {{ .Values.toolRuntime.image.pullPolicy }}
+        ports:
+        - containerPort: 3010
+          name: http
+        env:
+        - name: TOOL_RUNTIME_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "eneo.fullname" . }}-secrets
+              key: TOOL_RUNTIME_TOKEN
+        - name: TOOL_RUNTIME_FILE_ORIGINS
+          value: {{ include "eneo.toolRuntimeFileOrigin" . | quote }}
+        {{- range $k, $v := .Values.toolRuntime.env }}
+        - name: {{ $k }}
+          value: {{ $v | quote }}
+        {{- end }}
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: http
+          periodSeconds: 15
+          timeoutSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 3
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        {{- with .Values.toolRuntime.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+      volumes:
+      - name: tmp
+        emptyDir:
+          medium: Memory
+          sizeLimit: {{ .Values.toolRuntime.tmpSizeLimit }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "eneo.fullname" . }}-tool-runtime
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "eneo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: tool-runtime
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "eneo.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: tool-runtime
+  ports:
+    - port: {{ .Values.toolRuntime.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+---
+# The runtime runs model-written code: it may only be called by this release
+# and may only reach this release's backend (signed file downloads) and DNS.
+# No route to Postgres, Redis or the internet.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "eneo.fullname" . }}-tool-runtime
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "eneo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: tool-runtime
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "eneo.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: tool-runtime
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          {{- include "eneo.selectorLabels" . | nindent 10 }}
+    ports:
+    - port: 3010
+      protocol: TCP
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          {{- include "eneo.selectorLabels" . | nindent 10 }}
+          app.kubernetes.io/component: backend
+    ports:
+    - port: {{ .Values.backend.service.targetPort }}
+      protocol: TCP
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+{{- end }}

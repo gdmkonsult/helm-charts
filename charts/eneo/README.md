@@ -130,3 +130,32 @@ helm rollback <release> <revision> --namespace <namespace> --wait
 
 Do not switch only the frontend or only the backend image. All application
 images come from `Chart.yaml.appVersion` and must stay on the same channel.
+
+## Tool runtime (Eneo 2.3.0 and later)
+
+Only chart 1.0.202 and later (Eneo 2.3.0+) contain the runtime; older charts
+ignore `toolRuntime.enabled`. llmportal refuses to enable it on such releases.
+
+`toolRuntime.enabled: true` deploys `ghcr.io/eneo-ai/eneo-tool-runtime` (same
+`appVersion` as the backend), which serves the **Ask a file**, **Create a
+file**, **Charts** and **Compute** Functions. Off by default; not available on
+Flow `appVersion`s.
+
+Enabling it adds `TOOL_RUNTIME_URL` and `FILE_REFERENCE_BASE_URL` to the
+configmap and a generated `TOOL_RUNTIME_TOKEN` to the secret, so backend and
+worker roll automatically. It also adds a NetworkPolicy: only this release may
+call the runtime, and the runtime may only reach this release's backend and DNS.
+
+- Resources: limit 2 CPU / 2 GiB, request 50m / 128 Mi, matching upstream's
+  reference stack. `/tmp` is a 512 Mi memory-backed `emptyDir` counted in that
+  limit. Concurrency uses upstream defaults; override in `toolRuntime.env` and
+  raise the memory limit with it.
+- Scheduled only on nodes with kernel > 6 (NFD label), where Landlock confines
+  both files and TCP. `TOOL_RUNTIME_REQUIRE_CONFINEMENT=true` makes the pod
+  refuse to start otherwise.
+- Verify: the start-up log line shows `"confinement":{"files":true,"tcp":true}`,
+  and **Admin > Tools** in Eneo shows the runtime as connected.
+- `FILE_REFERENCE_BASE_URL` becomes the in-cluster backend address, which also
+  applies to signed file links handed to external MCP servers.
+
+Then turn the Functions on in Eneo under **Admin > Tools > Functions**.

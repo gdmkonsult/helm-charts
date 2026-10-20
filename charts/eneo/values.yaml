@@ -129,6 +129,42 @@ celeryBeat:
       cpu: "50m"
       memory: 256Mi
 
+# Bundled tool runtime (Eneo 2.3.0 and later): serves the "Ask a file", "Create a file",
+# "Charts" and "Compute" Functions. Opt-in per installation. Not available for
+# flow preview appVersions (no runtime image is published for them).
+# Operator guide: https://github.com/eneo-ai/eneo/blob/develop/docs/deployment/TOOL_RUNTIME.md
+toolRuntime:
+  enabled: false
+  image:
+    repository: ghcr.io/eneo-ai/eneo-tool-runtime
+    pullPolicy: IfNotPresent
+  service:
+    port: 3010
+  resources:
+    limits:
+      cpu: "2"
+      memory: 2Gi
+    requests:
+      cpu: "50m"
+      memory: 128Mi
+  # /tmp is memory-backed and counts towards the memory limit: job scratch
+  # space plus the 256 MiB tabular cache (TABULAR_CACHE_MB).
+  tmpSizeLimit: 512Mi
+  # Upstream concurrency defaults (16 calls, 2 native-engine jobs, 2 PDF renders)
+  # assume the 2 GiB limit above; raise memory together with any of them.
+  env:
+    TOOL_RUNTIME_REQUIRE_CONFINEMENT: "true"
+  # Jobs are confined with Landlock; the TCP restriction needs kernel >= 6.7.
+  # Label from Node Feature Discovery.
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: feature.node.kubernetes.io/kernel-version.major
+            operator: Gt
+            values: ["6"]
+
 # Redis configuration
 redis:
   enabled: true

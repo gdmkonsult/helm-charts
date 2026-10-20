@@ -191,6 +191,25 @@ Generate DEFAULT_USER_PASSWORD if not set, but preserve existing value on upgrad
 {{- end }}
 
 {{/*
+Generate TOOL_RUNTIME_TOKEN, preserved on upgrade (shared bearer between backend/worker and tool runtime)
+*/}}
+{{- define "eneo.generateToolRuntimeToken" -}}
+{{- $secret := lookup "v1" "Secret" .Release.Namespace (printf "%s-secrets" (include "eneo.fullname" .)) -}}
+{{- if and $secret (hasKey $secret.data "TOOL_RUNTIME_TOKEN") -}}
+{{- index $secret.data "TOOL_RUNTIME_TOKEN" | b64dec -}}
+{{- else -}}
+{{- randAlphaNum 64 -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+In-cluster origin the tool runtime downloads signed file references from
+*/}}
+{{- define "eneo.toolRuntimeFileOrigin" -}}
+{{- printf "http://%s-backend:%v" (include "eneo.fullname" .) .Values.backend.service.port -}}
+{{- end -}}
+
+{{/*
 Validate required values
 */}}
 {{- define "eneo.validateValues" -}}
