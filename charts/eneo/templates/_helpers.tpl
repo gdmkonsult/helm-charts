@@ -203,6 +203,29 @@ Generate TOOL_RUNTIME_TOKEN, preserved on upgrade (shared bearer between backend
 {{- end -}}
 
 {{/*
+Generate REDIS_PASSWORD, preserved on upgrade. Alphanumeric so it is safe in redis:// URLs.
+*/}}
+{{- define "eneo.generateRedisPassword" -}}
+{{- $secret := lookup "v1" "Secret" .Release.Namespace (printf "%s-secrets" (include "eneo.fullname" .)) -}}
+{{- if and $secret (hasKey $secret.data "REDIS_PASSWORD") -}}
+{{- index $secret.data "REDIS_PASSWORD" | b64dec -}}
+{{- else -}}
+{{- randAlphaNum 48 -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+"true" when appVersion routes crawls to the arq:crawler queue (Eneo 2.3.0+).
+Flow preview tags are not semver; their run.sh ignores WORKER_ROLE, so a crawler
+pod there would be a second general worker with a private /tmp.
+*/}}
+{{- define "eneo.hasCrawlerQueue" -}}
+{{- if and (regexMatch "^[0-9]+\\.[0-9]+\\.[0-9]+" .Chart.AppVersion) (semverCompare ">=2.3.0-0" .Chart.AppVersion) -}}
+true
+{{- end -}}
+{{- end -}}
+
+{{/*
 In-cluster origin the tool runtime downloads signed file references from
 */}}
 {{- define "eneo.toolRuntimeFileOrigin" -}}

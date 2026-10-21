@@ -91,6 +91,24 @@ worker:
       cpu: "100m"
       memory: 512Mi
 
+# Website crawler (Eneo 2.3.0+, rendered only for appVersion >= 2.3.0).
+# Consumes the arq:crawler queue that the general worker no longer reads.
+crawlerWorker:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: ghcr.io/eneo-ai/eneo-backend
+    pullPolicy: IfNotPresent
+  # Private /tmp for crawl downloads (node ephemeral storage, not shared-tmp).
+  tmpSizeLimit: 10Gi
+  resources:
+    limits:
+      cpu: "2"
+      memory: 4Gi
+    requests:
+      cpu: "100m"
+      memory: 512Mi
+
 # Flow execution worker (flow preview branches only, e.g.
 # feature-flows-and-builder-<sha>). Runs the image's task-execution-worker
 # entrypoint (ARQ, "flows.execute"), separate from the general ARQ worker above.
@@ -166,6 +184,7 @@ toolRuntime:
             values: ["6"]
 
 # Redis configuration
+# Password-protected (REDIS_PASSWORD, generated in the release secret).
 redis:
   enabled: true
   replicaCount: 1
@@ -222,6 +241,12 @@ postgres:
     maintenance_work_mem: "64MB"
     autovacuum_max_workers: "1"
     autovacuum_work_mem: "32MB"
+
+# Ingress isolation for Redis (this release only) and Postgres (this namespace,
+# the CNPG operator, and metrics on 9187). The tool runtime has its own policy.
+networkPolicy:
+  enabled: true
+  cnpgOperatorNamespace: cnpg-system
 
 # Shared storage configuration
 sharedStorage:

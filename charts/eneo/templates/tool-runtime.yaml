@@ -126,6 +126,10 @@ spec:
     - podSelector:
         matchLabels:
           {{- include "eneo.selectorLabels" . | nindent 10 }}
+        matchExpressions:
+        - key: app.kubernetes.io/component
+          operator: In
+          values: [backend, worker]
     ports:
     - port: 3010
       protocol: TCP

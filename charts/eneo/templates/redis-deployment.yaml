@@ -25,6 +25,20 @@ spec:
       - name: redis
         image: "{{ .Values.redis.image.repository }}:{{ .Values.redis.image.tag }}"
         imagePullPolicy: {{ .Values.redis.image.pullPolicy }}
+        # Eneo deserializes ARQ jobs with pickle, so an unauthenticated Redis is code execution in the worker.
+        command: ["sh", "-c", "exec redis-server --requirepass \"$REDIS_PASSWORD\""]
+        env:
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "eneo.fullname" . }}-secrets
+              key: REDIS_PASSWORD
+        # redis-cli (liveness probe) authenticates from this variable.
+        - name: REDISCLI_AUTH
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "eneo.fullname" . }}-secrets
+              key: REDIS_PASSWORD
         ports:
         - containerPort: {{ .Values.redis.service.targetPort }}
           name: redis

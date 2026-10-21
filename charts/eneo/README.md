@@ -143,8 +143,9 @@ Flow `appVersion`s.
 
 Enabling it adds `TOOL_RUNTIME_URL` and `FILE_REFERENCE_BASE_URL` to the
 configmap and a generated `TOOL_RUNTIME_TOKEN` to the secret, so backend and
-worker roll automatically. It also adds a NetworkPolicy: only this release may
-call the runtime, and the runtime may only reach this release's backend and DNS.
+worker roll automatically. It also adds a NetworkPolicy: only this release's
+backend and worker may call the runtime, and the runtime may only reach this
+release's backend and DNS.
 
 - Resources: limit 2 CPU / 2 GiB, request 50m / 128 Mi, matching upstream's
   reference stack. `/tmp` is a 512 Mi memory-backed `emptyDir` counted in that
@@ -159,3 +160,35 @@ call the runtime, and the runtime may only reach this release's backend and DNS.
   applies to signed file links handed to external MCP servers.
 
 Then turn the Functions on in Eneo under **Admin > Tools > Functions**.
+
+## Crawler worker (Eneo 2.3.0 and later)
+
+Eneo 2.3 moved website crawls to their own queue, `arq:crawler`, which only a
+worker started with `WORKER_ROLE=crawler` consumes. Charts before 1.0.204 ran
+2.3 without it, so crawls queued and never ran. From 1.0.204 the chart deploys
+`<release>-crawler-worker` whenever `appVersion` is 2.3.0 or later (never on
+Flow tags, whose images ignore `WORKER_ROLE`), and pins the existing worker to
+`WORKER_ROLE=general`.
+
+- `/tmp` is a private `emptyDir` (`crawlerWorker.tmpSizeLimit`, 10 Gi), never
+  the `shared-tmp` PVC: on start-up the crawler deletes every orphaned crawl
+  directory in `/tmp`.
+- `terminationGracePeriodSeconds: 70` and an `arq --check` liveness probe,
+  as in upstream's Compose stack.
+- Crawl jobs already queued in `arq:crawler` are picked up once it runs.
+
+## Redis password and NetworkPolicies (1.0.204 and later)
+
+Eneo deserializes ARQ jobs from Redis with pickle, so anyone who can write to
+Redis can run code in the worker, which holds every secret of the release.
+
+- Redis requires `REDIS_PASSWORD`, generated once in `<release>-secrets` and
+  read by every Eneo process through `envFrom` (supported since Eneo 2.2,
+  including Flow builds). Redis restarts on the upgrade (`Recreate`); expect a
+  few seconds of Redis errors while backend and workers roll.
+- `networkPolicy.enabled` (default `true`):
+  - Redis accepts connections only from pods of the same release.
+  - Postgres accepts connections from the same namespace (the customer's own
+    releases, including `copyFrom` clones), from the CNPG operator
+    (`networkPolicy.cnpgOperatorNamespace`, `cnpg-system`), and on the metrics
+    port 9187 from anywhere.

@@ -32,6 +32,9 @@ spec:
           value: {{ .Values.global.timeZone | quote }}
         - name: RUN_AS_WORKER
           value: "true"
+        # Eneo 2.3+: general queue only; crawls run in the crawler worker. Ignored by older images.
+        - name: WORKER_ROLE
+          value: general
         - name: POSTGRES_USER
           valueFrom:
             secretKeyRef:
