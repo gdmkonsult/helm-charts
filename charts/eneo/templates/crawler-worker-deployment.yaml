@@ -67,13 +67,6 @@ spec:
             name: {{ include "eneo.fullname" . }}-config
         - secretRef:
             name: {{ include "eneo.fullname" . }}-secrets
-        livenessProbe:
-          exec:
-            command: ["arq", "--check", "src.eneo.worker.arq.CrawlerWorkerSettings"]
-          initialDelaySeconds: 30
-          periodSeconds: 30
-          timeoutSeconds: 10
-          failureThreshold: 3
         volumeMounts:
         - name: data
           mountPath: /app/data
