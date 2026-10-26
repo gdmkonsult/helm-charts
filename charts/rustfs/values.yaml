@@ -1,0 +1,53 @@
+# Global settings
+global:
+  domain: ""
+  testEnvironment: false
+
+nameOverride: ""
+fullnameOverride: ""
+
+imagePullSecrets: []
+
+image:
+  repository: rustfs/rustfs
+  tag: "" # Defaults to chart appVersion
+  pullPolicy: IfNotPresent
+
+# Root credentials. Auto-generated (randAlphaNum) and persisted in the
+# {{ fullname }}-secrets Secret if left empty; set explicitly to override.
+auth:
+  accessKey: ""
+  secretKey: ""
+
+console:
+  # RustFS web console on port 9001. Keep false unless you need it;
+  # the console is only reachable in-cluster (no ingress route is created).
+  enabled: false
+
+logLevel: error
+
+persistence:
+  storageClass: "px-fa-direct-access"
+  size: 50Gi
+
+service:
+  type: ClusterIP
+  s3Port: 9000
+  consolePort: 9001
+
+# Disabled by default: S3 storage is consumed in-cluster (eneo, backups).
+# Enable per-org for customers who buy standalone S3 buckets.
+ingress:
+  enabled: false
+  className: ""
+  host: ""
+  tls: true
+  annotations: {}
+
+resources:
+  limits:
+    cpu: "2"
+    memory: 2Gi
+  requests:
+    cpu: 100m
+    memory: 256Mi

@@ -1,0 +1,12 @@
+apiVersion: v2
+name: rustfs
+description: A Helm chart for RustFS S3-compatible object storage (single-node standalone)
+type: application
+version: 0.1.0
+appVersion: "latest"
+keywords:
+  - rustfs
+  - s3
+  - object-storage
+maintainers:
+  - name: GDM
