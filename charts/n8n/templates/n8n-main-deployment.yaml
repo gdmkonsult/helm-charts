@@ -123,6 +123,8 @@ spec:
             - name: OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS
               value: "true"
             {{- end }}
+            - name: QUEUE_WORKER_LOCK_DURATION
+              value: {{ .Values.config.queueWorkerLockDuration | quote }}
             {{- if .Values.config.runners.enabled }}
             - name: N8N_RUNNERS_ENABLED
               value: "true"

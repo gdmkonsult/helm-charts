@@ -137,6 +137,10 @@ config:
     enabled: true
     mode: "external"
     brokerListenAddress: "127.0.0.1"
+    # queueWorkerLockDuration: how long a worker holds a job lock before it expires (ms)
+    queueWorkerLockDuration: "600000"
+    # runnersMaxConcurrency: max concurrent runner tasks per worker
+    runnersMaxConcurrency: "100"
 
 # Secrets configuration
 secrets:
