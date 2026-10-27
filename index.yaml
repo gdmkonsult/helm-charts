@@ -5053,6 +5053,24 @@ entries:
     urls:
     - https://github.com/gdmkonsult/helm-charts/releases/download/n8n-1.0.0/n8n-1.0.0.tgz
     version: 1.0.0
+  rustfs:
+  - apiVersion: v2
+    appVersion: 1.0.4
+    created: "2026-10-27T06:47:53.421582325Z"
+    description: RustFS S3-compatible object storage per organization, as a RustFS
+      Operator Tenant
+    digest: dbce7d837c49e049f6588aa471b88fdf87354d97d112583a2850ea5ef89c262c
+    keywords:
+    - rustfs
+    - s3
+    - object-storage
+    maintainers:
+    - name: GDM
+    name: rustfs
+    type: application
+    urls:
+    - https://github.com/gdmkonsult/helm-charts/releases/download/rustfs-0.1.0/rustfs-0.1.0.tgz
+    version: 0.1.0
   switchyard:
   - apiVersion: v2
     appVersion: 0.3.0
@@ -5154,4 +5172,4 @@ entries:
     urls:
     - https://github.com/gdmkonsult/helm-charts/releases/download/switchyard-0.1.0/switchyard-0.1.0.tgz
     version: 0.1.0
-generated: "2026-10-26T15:07:34.932785975Z"
+generated: "2026-10-27T06:47:53.42204547Z"
