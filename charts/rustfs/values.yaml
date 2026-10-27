@@ -48,5 +48,8 @@ ingress:
   enabled: false
   className: ""
   host: ""
+  # Extra hostnames routed to the same S3 endpoint (e.g. customer-owned
+  # domains). All get TLS via the same cert.
+  extraHosts: []
   tls: true
   annotations: {}
