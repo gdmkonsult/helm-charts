@@ -1,0 +1,47 @@
+# Reconciled by the cluster-wide RustFS Operator (rustfs-system). PVCs come from
+# the operator's StatefulSet volumeClaimTemplates without owner references, so
+# deleting this Tenant (or the release) keeps the data.
+apiVersion: rustfs.com/v1alpha1
+kind: Tenant
+metadata:
+  name: {{ include "rustfs.tenantName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "rustfs.labels" . | nindent 4 }}
+spec:
+  image: "{{ .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tag }}"
+  imagePullPolicy: {{ .Values.image.pullPolicy }}
+  credsSecret:
+    name: {{ include "rustfs.fullname" . }}-secrets
+  pools:
+    - name: pool-0
+      servers: 1
+      persistence:
+        volumesPerServer: 1
+        # Immutable after creation (StatefulSet volumeClaimTemplates): the
+        # operator rejects changes. Grow storage by resizing the PVC directly.
+        volumeClaimTemplate:
+          accessModes:
+            - ReadWriteOnce
+          {{- if .Values.persistence.storageClass }}
+          storageClassName: {{ .Values.persistence.storageClass | quote }}
+          {{- end }}
+          resources:
+            requests:
+              storage: {{ .Values.persistence.size }}
+      {{- with .Values.resources }}
+      resources:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  {{- with .Values.buckets }}
+  buckets:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.policies }}
+  policies:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.users }}
+  users:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
