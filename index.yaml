@@ -5056,6 +5056,23 @@ entries:
   rustfs:
   - apiVersion: v2
     appVersion: 1.0.4
+    created: "2026-10-27T10:19:27.320691937Z"
+    description: RustFS S3-compatible object storage per organization, as a RustFS
+      Operator Tenant
+    digest: 99d69946efc284b66acf192f43f1496658c08192e52e71a22f23080a7c4114f3
+    keywords:
+    - rustfs
+    - s3
+    - object-storage
+    maintainers:
+    - name: GDM
+    name: rustfs
+    type: application
+    urls:
+    - https://github.com/gdmkonsult/helm-charts/releases/download/rustfs-0.1.2/rustfs-0.1.2.tgz
+    version: 0.1.2
+  - apiVersion: v2
+    appVersion: 1.0.4
     created: "2026-10-27T09:56:10.788134257Z"
     description: RustFS S3-compatible object storage per organization, as a RustFS
       Operator Tenant
@@ -5189,4 +5206,4 @@ entries:
     urls:
     - https://github.com/gdmkonsult/helm-charts/releases/download/switchyard-0.1.0/switchyard-0.1.0.tgz
     version: 0.1.0
-generated: "2026-10-27T09:56:10.788888029Z"
+generated: "2026-10-27T10:19:27.320961761Z"
