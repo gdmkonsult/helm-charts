@@ -2,7 +2,7 @@ apiVersion: v2
 name: rustfs
 description: RustFS S3-compatible object storage per organization, as a RustFS Operator Tenant
 type: application
-version: 0.1.0
+version: 0.1.1
 appVersion: "1.0.4"
 keywords:
   - rustfs
