@@ -22,7 +22,9 @@ auth:
   secretKey: ""
 
 persistence:
-  storageClass: "px-fa-direct-access"
+  # fa-rwx is the proven Pure FlashArray class in this cluster (pure_fa_pod_name
+  # is required when the array uses Realms). Empty = cluster default (fa-rwx).
+  storageClass: ""
   # Fixed at creation; see templates/tenant.yaml.
   size: 50Gi
 

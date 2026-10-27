@@ -38,7 +38,7 @@ Root credentials are generated on first install and reused on upgrade via
 
 - **Storage size is fixed at creation.** `volumeClaimTemplates` are immutable,
   and the operator rejects changes to `persistence.size`. To grow storage,
-  resize the PVC directly (`px-fa-direct-access` allows expansion).
+  resize the PVC directly (`fa-rwx` allows expansion).
 - **Uninstall keeps the data.** The PVC has no owner reference, so deleting the
   release (and with it the Tenant) leaves the PVC behind. Re-creating with the
   same name re-attaches it. Delete the PVC explicitly to drop the data.
