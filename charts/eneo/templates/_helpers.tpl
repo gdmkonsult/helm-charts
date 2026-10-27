@@ -233,6 +233,22 @@ In-cluster origin the tool runtime downloads signed file references from
 {{- end -}}
 
 {{/*
+Tool runtime endpoints that are switched on, space separated ("" = no runtime).
+A function follows toolRuntime.functions.<name> when that is a boolean, else toolRuntime.enabled.
+*/}}
+{{- define "eneo.toolRuntimeActive" -}}
+{{- $fns := default dict .Values.toolRuntime.functions -}}
+{{- $out := list -}}
+{{- range $key, $slug := dict "compute" "compute" "charts" "charts" "fileAnalysis" "file-analysis" "fileCreation" "file-creation" -}}
+{{- $v := get $fns $key -}}
+{{- if (ternary $v $.Values.toolRuntime.enabled (kindIs "bool" $v)) -}}
+{{- $out = append $out $slug -}}
+{{- end -}}
+{{- end -}}
+{{- join " " $out -}}
+{{- end -}}
+
+{{/*
 Validate required values
 */}}
 {{- define "eneo.validateValues" -}}

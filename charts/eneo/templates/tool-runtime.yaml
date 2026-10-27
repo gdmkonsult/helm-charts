@@ -1,4 +1,47 @@
-{{- if .Values.toolRuntime.enabled -}}
+{{- $active := include "eneo.toolRuntimeActive" . -}}
+{{- if $active -}}
+# The runtime always serves all four endpoints. The gateway sidecar owns the pod's
+# port 3010 and forwards only the functions that are switched on, so a function
+# that is off cannot be called even with the shared token.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "eneo.fullname" . }}-tool-runtime-gateway
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "eneo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: tool-runtime
+data:
+  nginx.conf: |
+    worker_processes 1;
+    pid /tmp/nginx.pid;
+    error_log /dev/stderr warn;
+    events { worker_connections 256; }
+    http {
+      access_log off;
+      client_body_temp_path /tmp/client_temp;
+      proxy_temp_path /tmp/proxy_temp;
+      fastcgi_temp_path /tmp/fastcgi_temp;
+      uwsgi_temp_path /tmp/uwsgi_temp;
+      scgi_temp_path /tmp/scgi_temp;
+      server {
+        listen 3010;
+        client_max_body_size 0;
+        location / {
+          if ($uri !~ "^/(health/(live|ready)|diagnostics|mcp/({{ $active | replace " " "|" }}){{ if contains "file-creation" $active }}|templates/(builtin\.docx|inspect){{ end }})$") {
+            return 404;
+          }
+          proxy_pass http://127.0.0.1:3011;
+          proxy_http_version 1.1;
+          proxy_set_header Connection "";
+          proxy_set_header Host $host;
+          proxy_buffering off;
+          proxy_request_buffering off;
+          proxy_read_timeout 120s;
+        }
+      }
+    }
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -37,9 +80,11 @@ spec:
         image: {{ include "eneo.image" (dict "context" . "image" .Values.toolRuntime.image) | quote }}
         imagePullPolicy: {{ .Values.toolRuntime.image.pullPolicy }}
         ports:
-        - containerPort: 3010
-          name: http
+        - containerPort: 3011
+          name: runtime
         env:
+        - name: PORT
+          value: "3011"
         - name: TOOL_RUNTIME_TOKEN
           valueFrom:
             secretKeyRef:
@@ -54,13 +99,13 @@ spec:
         readinessProbe:
           httpGet:
             path: /health/ready
-            port: http
+            port: runtime
           periodSeconds: 15
           timeoutSeconds: 5
         livenessProbe:
           httpGet:
             path: /health/live
-            port: http
+            port: runtime
           initialDelaySeconds: 10
           periodSeconds: 15
           timeoutSeconds: 5
@@ -77,7 +122,40 @@ spec:
         resources:
           {{- toYaml . | nindent 10 }}
         {{- end }}
+      - name: gateway
+        image: {{ printf "%s:%s" .Values.toolRuntime.gateway.image.repository .Values.toolRuntime.gateway.image.tag | quote }}
+        imagePullPolicy: {{ .Values.toolRuntime.gateway.image.pullPolicy }}
+        args: ["nginx", "-c", "/etc/nginx-gateway/nginx.conf", "-g", "daemon off;"]
+        ports:
+        - containerPort: 3010
+          name: http
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: http
+          periodSeconds: 15
+          timeoutSeconds: 5
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+        volumeMounts:
+        - name: gateway-conf
+          mountPath: /etc/nginx-gateway
+        - name: gateway-tmp
+          mountPath: /tmp
+        {{- with .Values.toolRuntime.gateway.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
       volumes:
+      - name: gateway-conf
+        configMap:
+          name: {{ include "eneo.fullname" . }}-tool-runtime-gateway
+      - name: gateway-tmp
+        emptyDir:
+          sizeLimit: 16Mi
       - name: tmp
         emptyDir:
           medium: Memory

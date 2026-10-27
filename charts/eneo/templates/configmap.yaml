@@ -60,7 +60,7 @@ data:
   DB_POOL_SIZE: {{ .Values.config.dbPoolSize | quote }}
   DB_POOL_MAX_OVERFLOW: {{ .Values.config.dbPoolMaxOverflow | quote }}
   DB_POOL_TIMEOUT: {{ .Values.config.dbPoolTimeout | quote }}
-  {{- if .Values.toolRuntime.enabled }}
+  {{- if include "eneo.toolRuntimeActive" . }}
   TOOL_RUNTIME_URL: {{ printf "http://%s-tool-runtime:%v" (include "eneo.fullname" .) .Values.toolRuntime.service.port | quote }}
   FILE_REFERENCE_BASE_URL: {{ include "eneo.toolRuntimeFileOrigin" . | quote }}
   {{- end }}

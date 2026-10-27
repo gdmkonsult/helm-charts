@@ -141,6 +141,27 @@ ignore `toolRuntime.enabled`. llmportal refuses to enable it on such releases.
 file**, **Charts** and **Compute** Functions. Off by default; not available on
 Flow `appVersion`s.
 
+### Choosing functions
+
+`toolRuntime.enabled: true` turns on all four. To turn on only some, set them
+individually; a boolean under `toolRuntime.functions` wins over `enabled`:
+
+```yaml
+toolRuntime:
+  functions:
+    fileAnalysis: true   # Ask a file  (/mcp/file-analysis)
+    fileCreation: false  # Create a file (/mcp/file-creation, /templates/*)
+    charts: true         # Charts      (/mcp/charts)
+    compute: false       # Compute     (/mcp/compute)
+```
+
+The runtime is deployed when at least one function is on. The runtime process
+always serves every endpoint, so an nginx `gateway` sidecar owns port 3010 and
+forwards only the enabled functions (plus `/health/*` and `/diagnostics`); the
+others return 404 even with a valid token. No change in Eneo is needed. Eneo's
+**Admin > Tools** still decides per space and assistant. Upgrading an existing
+`enabled: true` release changes nothing: all four stay on.
+
 Enabling it adds `TOOL_RUNTIME_URL` and `FILE_REFERENCE_BASE_URL` to the
 configmap and a generated `TOOL_RUNTIME_TOKEN` to the secret, so backend and
 worker roll automatically. It also adds a NetworkPolicy: only this release's

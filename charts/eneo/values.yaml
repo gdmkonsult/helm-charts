@@ -152,7 +152,29 @@ celeryBeat:
 # flow preview appVersions (no runtime image is published for them).
 # Operator guide: https://github.com/eneo-ai/eneo/blob/develop/docs/deployment/TOOL_RUNTIME.md
 toolRuntime:
+  # Master switch: turns on every function that is not set explicitly below.
   enabled: false
+  # Per-function switch. A boolean wins over `enabled`; unset follows it.
+  # The runtime is deployed when at least one function is on, and the gateway
+  # sidecar forwards only those functions.
+  functions: {}
+    # fileAnalysis: false   # Fråga fil
+    # fileCreation: false   # Skapa fil
+    # charts: false         # Diagram
+    # compute: false        # Beräkning
+  # Sidecar that filters which /mcp/<function> endpoints are reachable.
+  gateway:
+    image:
+      repository: nginxinc/nginx-unprivileged
+      tag: "1.30-alpine"
+      pullPolicy: IfNotPresent
+    resources:
+      limits:
+        cpu: 200m
+        memory: 64Mi
+      requests:
+        cpu: 10m
+        memory: 16Mi
   image:
     repository: ghcr.io/eneo-ai/eneo-tool-runtime
     pullPolicy: IfNotPresent
