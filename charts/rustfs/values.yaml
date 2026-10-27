@@ -1,0 +1,50 @@
+# Requires the RustFS Operator (Tenant CRD rustfs.com/v1alpha1) installed
+# cluster-wide, see gdm-rke2-ai-services-apps/apps/rustfs-operator.
+
+global:
+  domain: ""
+  testEnvironment: false
+
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: rustfs/rustfs
+  # Defaults to Chart.appVersion. Keep pinned: the operator only trusts
+  # verified >= 1.0.0 release tags for its RuntimeDefault seccomp profile.
+  tag: ""
+  pullPolicy: IfNotPresent
+
+# Root credentials. Generated (randAlphaNum) on first install and reused from
+# <fullname>-secrets on upgrade if left empty.
+auth:
+  accessKey: ""
+  secretKey: ""
+
+persistence:
+  storageClass: "px-fa-direct-access"
+  # Fixed at creation; see templates/tenant.yaml.
+  size: 50Gi
+
+resources:
+  limits:
+    cpu: "2"
+    memory: 2Gi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+# Declarative provisioning, passed through to the Tenant spec unchanged.
+# Schema: kubectl explain tenant.spec.buckets / .policies / .users
+buckets: []
+policies: []
+users: []
+
+# Disabled by default: storage is consumed in-cluster (eneo, backups).
+# Enable for customers buying standalone S3 storage.
+ingress:
+  enabled: false
+  className: ""
+  host: ""
+  tls: true
+  annotations: {}
