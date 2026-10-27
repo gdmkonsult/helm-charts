@@ -6,8 +6,7 @@ Expand the name of the chart.
 {{- end }}
 
 {{/*
-Create a default fully qualified app name. Also used as the Tenant name, so
-the operator's S3 Service is "<fullname>-io".
+Create a default fully qualified app name.
 */}}
 {{- define "rustfs.fullname" -}}
 {{- if .Values.fullnameOverride }}
@@ -39,6 +38,15 @@ helm.sh/chart: {{ include "rustfs.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
+{{/*
+Tenant name = release name. The operator labels pods and PVCs with
+app.kubernetes.io/instance=<tenant>, which is how llmportal finds an app's
+pods (resource stats, upgrade verification). The S3 Service is "<tenant>-io".
+*/}}
+{{- define "rustfs.tenantName" -}}
+{{- .Release.Name | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*

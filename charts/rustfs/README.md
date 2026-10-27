@@ -17,13 +17,18 @@ The RustFS Operator must be installed cluster-wide (Tenant CRD
 | Resource | Name | Owner |
 |---|---|---|
 | Secret (`accesskey`/`secretkey`) | `<fullname>-secrets` | chart |
-| Tenant | `<fullname>` | chart |
-| StatefulSet | `<fullname>-pool-0` | operator |
-| PVC | `vol-0-<fullname>-pool-0-0` | StatefulSet (no owner ref) |
-| S3 Service (port 9000) | `<fullname>-io` | operator |
+| Tenant | `<release>` | chart |
+| StatefulSet | `<release>-pool-0` | operator |
+| PVC | `vol-0-<release>-pool-0-0` | StatefulSet (no owner ref) |
+| S3 Service (port 9000) | `<release>-io` | operator |
 | Ingress (optional) | `<fullname>` | chart |
 
-In-cluster S3 endpoint: `http://<fullname>-io.<namespace>.svc.cluster.local:9000`
+The Tenant is named after the release (= the llmportal application name) so
+the operator's `app.kubernetes.io/instance` label on pods and PVCs matches the
+application. llmportal relies on that label for resource stats and upgrade
+verification.
+
+In-cluster S3 endpoint: `http://<release>-io.<namespace>.svc.cluster.local:9000`
 (path-style addressing).
 
 Root credentials are generated on first install and reused on upgrade via

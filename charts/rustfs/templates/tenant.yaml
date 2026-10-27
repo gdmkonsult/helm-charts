@@ -4,7 +4,7 @@
 apiVersion: rustfs.com/v1alpha1
 kind: Tenant
 metadata:
-  name: {{ include "rustfs.fullname" . }}
+  name: {{ include "rustfs.tenantName" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "rustfs.labels" . | nindent 4 }}

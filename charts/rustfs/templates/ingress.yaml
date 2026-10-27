@@ -32,7 +32,7 @@ spec:
             backend:
               service:
                 # S3 Service created by the operator for the Tenant
-                name: {{ include "rustfs.fullname" . }}-io
+                name: {{ include "rustfs.tenantName" . }}-io
                 port:
                   number: 9000
 {{- end }}
