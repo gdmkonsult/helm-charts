@@ -71,7 +71,7 @@ frontend:
   resources:
     limits:
       cpu: "2"
-      memory: 2Gi
+      memory: 1Gi
     requests:
       cpu: "100m"
       memory: 256Mi
@@ -86,7 +86,7 @@ worker:
   resources:
     limits:
       cpu: "2"
-      memory: 4Gi
+      memory: 2Gi
     requests:
       cpu: "100m"
       memory: 512Mi
@@ -104,7 +104,7 @@ crawlerWorker:
   resources:
     limits:
       cpu: "2"
-      memory: 4Gi
+      memory: 3Gi
     requests:
       cpu: "100m"
       memory: 512Mi
@@ -225,7 +225,6 @@ redis:
   resources:
     limits:
       cpu: "2"
-      memory: 2Gi
     requests:
       cpu: "100m"
       memory: 128Mi
