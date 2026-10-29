@@ -92,7 +92,7 @@ backend:
   persistence:
     enabled: true
     storageClass: ""
-    size: 20Gi # For /app/FILES (uploads & temporary project files)
+    size: 20Gi # Mounted at /app/FILES but unused: attachments live in the DB (GDM chunks) or Foundry
   resources:
     limits:
       cpu: "2"
