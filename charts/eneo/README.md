@@ -45,6 +45,30 @@ intentionally leaves the migration paused. Eneo 2.2 continues to use the ARQ
 worker entrypoint and does not recognize the Flow-only Celery switches, so keep
 `celeryWorker.enabled` and `celeryBeat.enabled` disabled for this release.
 
+### Upgrading to a new major/minor version (2.2 → 2.3, 2.3 → 3.0, ...)
+
+Before bumping `appVersion` across a minor or major boundary, read the
+operator-facing change lists — the GitHub release notes alone do not cover
+operator actions:
+
+1. **https://eneo.ai/versioner.html** — Swedish release notes with a
+   "Viktig förändring – kräver åtgärd!" section per version (operator
+   actions, removed variables, migration steps). Updated after the release;
+   check it again a few days later if the new version is not listed yet.
+2. **https://docs.eneo.ai/guides/upgrade-X-Y-0** — the step-by-step upgrade
+   guide for the target version (e.g. `upgrade-2-2-0`).
+3. **`frontend/packages/whats-new/releases.json`** at the release tag in the
+   eneo repo — the machine-readable source behind versioner.html; also the
+   file whose missing `date` failed the v2.3.0 image build.
+4. **`docs/deployment/`** at the release tag — env templates
+   (`env_backend.template`), `TOOL_RUNTIME.md`, `OBJECT_CONTENT.md` and
+   `README.md` describe new/removed environment variables and services.
+
+Then diff the chart's emitted variables against the new
+`env_backend.template` and remove anything the new version no longer reads
+(2.3 dropped `USING_CRAWL`, `USING_IMAGE_GENERATION`, `TAVILY_API_KEY` and
+`FLUX_API_KEY`; 2.2 renamed `INTRIC_*` to `ENEO_*`).
+
 ### Upgrading to Eneo 2.3
 
 Eneo 2.3 derives API key hashes from `API_KEY_HASH_SECRET` instead of

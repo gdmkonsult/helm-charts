@@ -31,8 +31,6 @@ data:
   USING_ACCESS_MANAGEMENT: {{ .Values.config.usingAccessManagement | quote }}
   USING_AZURE_MODELS: {{ .Values.config.usingAzureModels | quote }}
   USING_IAM: {{ .Values.config.usingIam | quote }}
-  USING_IMAGE_GENERATION: {{ .Values.config.usingImageGeneration | quote }}
-  USING_CRAWL: {{ .Values.config.usingCrawl | quote }}
   TESTING: {{ .Values.config.testing | quote }}
   WORKER_MAX_JOBS: {{ .Values.config.workerMaxConcurrentJobs | quote }}
   TENANT_WORKER_CONCURRENCY_LIMIT: {{ .Values.config.tenantWorkerConcurrencyLimit | quote }}
