@@ -45,6 +45,19 @@ intentionally leaves the migration paused. Eneo 2.2 continues to use the ARQ
 worker entrypoint and does not recognize the Flow-only Celery switches, so keep
 `celeryWorker.enabled` and `celeryBeat.enabled` disabled for this release.
 
+### Upgrading to Eneo 2.3
+
+Eneo 2.3 derives API key hashes from `API_KEY_HASH_SECRET` instead of
+`JWT_SECRET`. The chart generates it once in `<release>-secrets` and preserves
+it on upgrades, so existing API keys keep resolving. Set
+`secrets.apiKeyHashSecret` only when migrating a deployment whose API keys
+were hashed with a specific `JWT_SECRET` you intend to rotate.
+
+Release images publish without the `v` prefix (`2.3.0-rc.6`, not `v2.3.0`).
+The stable updater picks the newest GitHub release tag, which can be a final
+release whose image build failed (as with `v2.3.0`); if pods hit
+ImagePullBackOff, pin `appVersion` to the newest tag with published images.
+
 ### Flow preview
 
 Set `appVersion` to a commit-pinned Flow image tag (`<branch>-<sha7>`), for

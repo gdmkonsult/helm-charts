@@ -191,6 +191,22 @@ Generate DEFAULT_USER_PASSWORD if not set, but preserve existing value on upgrad
 {{- end }}
 
 {{/*
+Generate API_KEY_HASH_SECRET, preserved on upgrade. Eneo 2.3+ derives API key
+hashes from this value instead of JWT_SECRET, so API keys survive JWT rotation.
+*/}}
+{{- define "eneo.generateApiKeyHashSecret" -}}
+{{- $secretName := printf "%s-secrets" (include "eneo.fullname" .context) -}}
+{{- $secret := lookup "v1" "Secret" .context.Release.Namespace $secretName -}}
+{{- if and $secret (hasKey $secret.data "API_KEY_HASH_SECRET") -}}
+{{- index $secret.data "API_KEY_HASH_SECRET" | b64dec -}}
+{{- else if .value -}}
+{{ .value }}
+{{- else -}}
+{{ randAlphaNum 64 }}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Generate TOOL_RUNTIME_TOKEN, preserved on upgrade (shared bearer between backend/worker and tool runtime)
 */}}
 {{- define "eneo.generateToolRuntimeToken" -}}

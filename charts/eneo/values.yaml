@@ -385,6 +385,9 @@ config:
 secrets:
   # Security keys - auto-generated if empty (DO NOT set in values.yaml for production)
   jwtSecret: ""
+  # Eneo 2.3+: derives API key hashes; set only to keep existing keys when
+  # migrating from a deployment that used JWT_SECRET for them.
+  apiKeyHashSecret: ""
   urlSigningKey: ""
   # Required for per-tenant federation (encrypts client secrets in DB).
   # Auto-generated if empty.
