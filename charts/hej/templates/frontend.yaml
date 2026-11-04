@@ -142,13 +142,16 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 15
             timeoutSeconds: 5
+          # Tolerate ~2 min of event-loop stall (e.g. bulk sync decrypt) before
+          # restarting; a restart drops in-flight work and the client just retries.
           livenessProbe:
             httpGet:
               path: /api/config
               port: 80
             initialDelaySeconds: 20
             periodSeconds: 20
-            timeoutSeconds: 5
+            timeoutSeconds: 10
+            failureThreshold: 6
           resources:
             {{- toYaml .Values.frontend.resources | nindent 12 }}
           {{- if or .Values.branding.logoBase64 .Values.branding.backgroundBase64 }}
