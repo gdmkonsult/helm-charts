@@ -95,6 +95,12 @@ transcription_models = [
         "is_active": True,
     },
     {
+        "name": "pianissimo-sv",
+        "display_name": "pianissimo-sv",
+        "hosting": "swe",
+        "is_active": True,
+    },
+    {
         "name": "vemsa-diarization",
         "display_name": "Vemsa - Talaranalys & Diarisering",
         "hosting": "swe",
