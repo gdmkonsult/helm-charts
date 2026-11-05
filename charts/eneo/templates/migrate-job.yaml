@@ -96,11 +96,16 @@ spec:
             secretKeyRef:
               name: {{ include "eneo.fullname" . }}-postgres-app
               key: dbname
+        {{- include "eneo.objectContentCa.env" . | nindent 8 }}
         envFrom:
         - configMapRef:
             name: {{ include "eneo.fullname" . }}-config
         - secretRef:
             name: {{ include "eneo.fullname" . }}-secrets
+        {{- if .Values.config.objectContentCaSecret }}
+        volumeMounts:
+        {{- include "eneo.objectContentCa.volumeMount" . | nindent 8 }}
+        {{- end }}
         {{- with .Values.migrationJob.resources }}
         resources:
           {{- toYaml . | nindent 10 }}
@@ -109,4 +114,5 @@ spec:
       - name: gdm-files
         configMap:
           name: {{ include "eneo.fullname" . }}-files
+      {{- include "eneo.objectContentCa.volume" . | nindent 6 }}
 {{- end }}

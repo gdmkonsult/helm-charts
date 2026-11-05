@@ -378,10 +378,12 @@ config:
   dbPoolSize: "5"
   dbPoolMaxOverflow: "2"
   dbPoolTimeout: "30"
-  # Eneo 2.3 object storage (Admin > File storage): allow a plain-HTTP S3
-  # endpoint. Only for in-cluster endpoints such as the llmportal RustFS
-  # service (http://<app>-io.<namespace>.svc.cluster.local:9000).
-  objectContentAllowInsecureHttp: false
+  # Eneo 2.3 object storage (Admin > File storage) on an in-cluster RustFS
+  # instance from llmportal: name of its server TLS Secret
+  # (<rustfs-fullname>-server-tls, same namespace). Only ca.crt is mounted and
+  # OBJECT_CONTENT_CA_BUNDLE points at it. Endpoint:
+  # https://<app>-io.<namespace>.svc.cluster.local:9000
+  objectContentCaSecret: ""
 
 # Secrets configuration
 secrets:

@@ -61,6 +61,7 @@ spec:
             secretKeyRef:
               name: {{ include "eneo.fullname" . }}-postgres-app
               key: dbname
+        {{- include "eneo.objectContentCa.env" . | nindent 8 }}
         envFrom:
         - configMapRef:
             name: {{ include "eneo.fullname" . }}-config
@@ -71,6 +72,7 @@ spec:
           mountPath: /app/data
         - name: tmp
           mountPath: /tmp
+        {{- include "eneo.objectContentCa.volumeMount" . | nindent 8 }}
         {{- with .Values.celeryWorker.resources }}
         resources:
           {{- toYaml . | nindent 10 }}
@@ -85,4 +87,5 @@ spec:
       - name: gdm-files
         configMap:
           name: {{ include "eneo.fullname" . }}-files
+      {{- include "eneo.objectContentCa.volume" . | nindent 6 }}
 {{- end }}

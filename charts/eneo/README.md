@@ -47,18 +47,20 @@ worker entrypoint and does not recognize the Flow-only Celery switches, so keep
 
 ### Object storage (Eneo 2.3+)
 
-Eneo refuses plain-HTTP object storage endpoints by default. To connect an
-in-cluster S3 endpoint, such as a RustFS instance from llmportal
-(`http://<app>-io.<namespace>.svc.cluster.local:9000`), in **Admin > File
-storage**, enable:
+To store files on an in-cluster RustFS instance from llmportal (S3-lagring),
+connect it in **Admin > File storage** with endpoint
+`https://<app>-io.<namespace>.svc.cluster.local:9000`, region `us-east-1`,
+path-style addressing and an access key from llmportal. Eneo must trust the
+instance's private CA:
 
 ```yaml
 config:
-  objectContentAllowInsecureHttp: true
+  objectContentCaSecret: <app>-rustfs-server-tls   # <app>-server-tls if <app> contains "rustfs"
 ```
 
-This sets `OBJECT_CONTENT_ALLOW_INSECURE_HTTP=true` for all Eneo processes.
-Leave it off for external (HTTPS) endpoints.
+Only `ca.crt` from that Secret is mounted (into backend, workers and the
+migration job) and `OBJECT_CONTENT_CA_BUNDLE` is set. Plain-HTTP endpoints are
+not supported by this chart.
 
 ### Upgrading to a new major/minor version (2.2 → 2.3, 2.3 → 3.0, ...)
 

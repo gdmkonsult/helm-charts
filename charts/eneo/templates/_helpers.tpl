@@ -275,3 +275,34 @@ Validate required values
 {{- fail "copyFrom.releaseName is required when copyFrom.enabled is true" -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Object storage CA (Eneo 2.3+): trust only ca.crt from the RustFS server Secret
+(config.objectContentCaSecret). Env and mount always go together; the env
+without the file would fail settings validation at startup.
+*/}}
+{{- define "eneo.objectContentCa.env" -}}
+{{- if .Values.config.objectContentCaSecret }}
+- name: OBJECT_CONTENT_CA_BUNDLE
+  value: /etc/eneo/object-content-ca/ca.crt
+{{- end }}
+{{- end }}
+
+{{- define "eneo.objectContentCa.volumeMount" -}}
+{{- if .Values.config.objectContentCaSecret }}
+- name: object-content-ca
+  mountPath: /etc/eneo/object-content-ca
+  readOnly: true
+{{- end }}
+{{- end }}
+
+{{- define "eneo.objectContentCa.volume" -}}
+{{- if .Values.config.objectContentCaSecret }}
+- name: object-content-ca
+  secret:
+    secretName: {{ .Values.config.objectContentCaSecret }}
+    items:
+      - key: ca.crt
+        path: ca.crt
+{{- end }}
+{{- end }}
