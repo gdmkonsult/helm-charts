@@ -13,6 +13,27 @@ spec:
   imagePullPolicy: {{ .Values.image.pullPolicy }}
   credsSecret:
     name: {{ include "rustfs.fullname" . }}-secrets
+  {{- if .Values.tls.enabled }}
+  # HTTPS on <tenant>-io:9000. Certificate renewal restarts the pod (Rollout is
+  # the only strategy the operator supports); the CA stays, so clients are
+  # unaffected.
+  tls:
+    mode: certManager
+    rotationStrategy: Rollout
+    enableInternodeHttps: true
+    certManager:
+      manageCertificate: true
+      secretName: {{ include "rustfs.fullname" . }}-server-tls
+      issuerRef:
+        group: cert-manager.io
+        kind: Issuer
+        name: {{ include "rustfs.fullname" . }}-ca-issuer
+      includeGeneratedDnsNames: true
+      duration: {{ .Values.tls.duration }}
+      renewBefore: {{ .Values.tls.renewBefore }}
+      usages:
+        - server auth
+  {{- end }}
   pools:
     - name: pool-0
       servers: 1

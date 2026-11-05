@@ -50,6 +50,18 @@ pods (resource stats, upgrade verification). The S3 Service is "<tenant>-io".
 {{- end }}
 
 {{/*
+Ingress backend: the chart's TLS-aware Service when in-cluster TLS is on,
+otherwise the operator's plain S3 Service.
+*/}}
+{{- define "rustfs.ingressBackend" -}}
+{{- if .Values.tls.enabled -}}
+{{ include "rustfs.fullname" . }}-s3
+{{- else -}}
+{{ include "rustfs.tenantName" . }}-io
+{{- end -}}
+{{- end }}
+
+{{/*
 Selector labels
 */}}
 {{- define "rustfs.selectorLabels" -}}

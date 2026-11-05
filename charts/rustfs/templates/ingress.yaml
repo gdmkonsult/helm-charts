@@ -34,8 +34,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                # S3 Service created by the operator for the Tenant
-                name: {{ include "rustfs.tenantName" . }}-io
+                name: {{ include "rustfs.ingressBackend" . }}
                 port:
                   number: 9000
     {{- range .Values.ingress.extraHosts }}
@@ -46,8 +45,43 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: {{ include "rustfs.tenantName" $ }}-io
+                name: {{ include "rustfs.ingressBackend" $ }}
                 port:
                   number: 9000
     {{- end }}
+{{- end }}
+{{- if and .Values.ingress.enabled .Values.tls.enabled }}
+---
+# The operator's <tenant>-io Service cannot carry annotations, so Traefik gets
+# its own Service: HTTPS to RustFS, verified against the instance CA.
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: {{ include "rustfs.fullname" . }}-s3
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "rustfs.labels" . | nindent 4 }}
+spec:
+  serverName: {{ printf "%s-io.%s.svc.cluster.local" (include "rustfs.tenantName" .) .Release.Namespace }}
+  rootCAs:
+    - secret: {{ include "rustfs.fullname" . }}-server-tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "rustfs.fullname" . }}-s3
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "rustfs.labels" . | nindent 4 }}
+  annotations:
+    traefik.ingress.kubernetes.io/service.serversscheme: https
+    traefik.ingress.kubernetes.io/service.serverstransport: {{ printf "%s-%s-s3@kubernetescrd" .Release.Namespace (include "rustfs.fullname" .) }}
+spec:
+  type: ClusterIP
+  selector:
+    rustfs.tenant: {{ include "rustfs.tenantName" . }}
+  ports:
+    - name: https-s3
+      port: 9000
+      targetPort: 9000
 {{- end }}

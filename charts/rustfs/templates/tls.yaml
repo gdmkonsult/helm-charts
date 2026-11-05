@@ -1,0 +1,51 @@
+{{- if .Values.tls.enabled }}
+{{- $fullname := include "rustfs.fullname" . }}
+# Per-instance CA for the in-cluster S3 API. The operator requests the server
+# certificate (<fullname>-server-tls, incl. ca.crt) from <fullname>-ca-issuer.
+# Clients (eneo, llmportal, Traefik) trust only ca.crt from that Secret.
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ $fullname }}-selfsigned
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "rustfs.labels" . | nindent 4 }}
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ $fullname }}-ca
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "rustfs.labels" . | nindent 4 }}
+spec:
+  isCA: true
+  commonName: {{ printf "%s RustFS CA" (include "rustfs.tenantName" .) | quote }}
+  secretName: {{ $fullname }}-ca
+  duration: {{ .Values.tls.caDuration }}
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    # Keep the CA key on renewal so clients with the current ca.crt keep working.
+    rotationPolicy: Never
+  secretTemplate:
+    labels:
+      {{- include "rustfs.selectorLabels" . | nindent 6 }}
+  issuerRef:
+    group: cert-manager.io
+    kind: Issuer
+    name: {{ $fullname }}-selfsigned
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ $fullname }}-ca-issuer
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "rustfs.labels" . | nindent 4 }}
+spec:
+  ca:
+    secretName: {{ $fullname }}-ca
+{{- end }}

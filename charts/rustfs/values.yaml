@@ -44,6 +44,15 @@ users: []
 
 # Disabled by default: storage is consumed in-cluster (eneo, backups).
 # Enable for customers buying standalone S3 storage.
+# In-cluster TLS for the S3 API: https://<release>-io.<namespace>.svc.cluster.local:9000.
+# cert-manager issues the server certificate from a per-instance CA; clients
+# trust ca.crt from Secret <fullname>-server-tls. Plain HTTP is then refused.
+tls:
+  enabled: true
+  caDuration: 87600h
+  duration: 8760h
+  renewBefore: 720h
+
 ingress:
   enabled: false
   className: ""
