@@ -45,6 +45,21 @@ intentionally leaves the migration paused. Eneo 2.2 continues to use the ARQ
 worker entrypoint and does not recognize the Flow-only Celery switches, so keep
 `celeryWorker.enabled` and `celeryBeat.enabled` disabled for this release.
 
+### Object storage (Eneo 2.3+)
+
+Eneo refuses plain-HTTP object storage endpoints by default. To connect an
+in-cluster S3 endpoint, such as a RustFS instance from llmportal
+(`http://<app>-io.<namespace>.svc.cluster.local:9000`), in **Admin > File
+storage**, enable:
+
+```yaml
+config:
+  objectContentAllowInsecureHttp: true
+```
+
+This sets `OBJECT_CONTENT_ALLOW_INSECURE_HTTP=true` for all Eneo processes.
+Leave it off for external (HTTPS) endpoints.
+
 ### Upgrading to a new major/minor version (2.2 → 2.3, 2.3 → 3.0, ...)
 
 Before bumping `appVersion` across a minor or major boundary, read the
