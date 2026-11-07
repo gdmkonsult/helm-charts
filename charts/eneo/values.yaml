@@ -388,9 +388,11 @@ config:
   # deriving signed download links' scheme (request.base_url). Without it the
   # links behind Traefik come out as http:// and browsers block them as mixed
   # content (Eneo 2.3 serves document downloads/previews through them).
-  # Default is the cluster pod CIDR where the Traefik pods live; override for
-  # clusters with a different CIDR.
-  forwardedAllowIps: "100.65.0.0/16"
+  # Gunicorn validates each entry with ip_address(), so CIDR notation is NOT
+  # accepted - only literal IPs, comma-separated, or "*". "*" is safe here:
+  # the chart's NetworkPolicy already restricts which pods can reach the
+  # backend, and X-Forwarded-* only arrives through the ingress.
+  forwardedAllowIps: "*"
 
 # Interactive tool views (MCP Apps, Eneo 2.3+): sandboxed HTML views for tool
 # results (interactive charts, query-result tables). Off by default; the tools
