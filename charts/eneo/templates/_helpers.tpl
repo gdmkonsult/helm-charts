@@ -274,6 +274,14 @@ Validate required values
 {{- if and .Values.copyFrom.enabled (not .Values.copyFrom.releaseName) -}}
 {{- fail "copyFrom.releaseName is required when copyFrom.enabled is true" -}}
 {{- end -}}
+{{- if .Values.mcpApps.enabled -}}
+{{- if not .Values.mcpApps.contentHost -}}
+{{- fail "mcpApps.contentHost is required when mcpApps.enabled is true (must be a hostname different from global.domain)" -}}
+{{- end -}}
+{{- if eq .Values.mcpApps.contentHost .Values.global.domain -}}
+{{- fail "mcpApps.contentHost must differ from global.domain: views refuse to render on the same origin" -}}
+{{- end -}}
+{{- end -}}
 {{- end -}}
 
 {{/*

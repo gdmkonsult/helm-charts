@@ -1,0 +1,40 @@
+{{- if and .Values.ingress.enabled .Values.mcpApps.enabled -}}
+# Interactive tool views (MCP Apps): the view content must be served from a
+# DIFFERENT origin than the app (PUBLIC_ORIGIN) or the sandboxed frames refuse
+# to render. This ingress exposes only the view-content path on the dedicated
+# content host; everything else 404s there.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "eneo.fullname" . }}-mcp-apps
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "eneo.labels" . | nindent 4 }}
+  annotations:
+    # Above the frontend catch-all (priority 1) and backend (priority 20).
+    traefik.ingress.kubernetes.io/router.priority: "30"
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+  - hosts:
+    - {{ .Values.mcpApps.contentHost }}
+    secretName: {{ .Values.mcpApps.contentHost | replace "." "-" }}-tls
+  {{- end }}
+  rules:
+  - host: {{ .Values.mcpApps.contentHost }}
+    http:
+      paths:
+      - path: /api/v1/mcp-apps
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ include "eneo.fullname" . }}-backend
+            port:
+              number: {{ .Values.backend.service.port }}
+{{- end }}

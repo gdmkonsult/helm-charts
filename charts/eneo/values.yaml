@@ -384,6 +384,24 @@ config:
   # OBJECT_CONTENT_CA_BUNDLE points at it. Endpoint:
   # https://<app>-io.<namespace>.svc.cluster.local:9000
   objectContentCaSecret: ""
+  # Gunicorn/uvicorn only trusts X-Forwarded-Proto from these addresses when
+  # deriving signed download links' scheme (request.base_url). Without it the
+  # links behind Traefik come out as http:// and browsers block them as mixed
+  # content (Eneo 2.3 serves document downloads/previews through them).
+  # Default is the cluster pod CIDR where the Traefik pods live; override for
+  # clusters with a different CIDR.
+  forwardedAllowIps: "100.65.0.0/16"
+
+# Interactive tool views (MCP Apps, Eneo 2.3+): sandboxed HTML views for tool
+# results (interactive charts, query-result tables). Off by default; the tools
+# degrade gracefully to PNG images / text without it. Requires a SECOND
+# hostname (different origin than global.domain - views refuse to render
+# otherwise) whose DNS points at the same ingress. Only the view-content path
+# is routed there. See upstream docs/deployment/MCP_APPS.md.
+mcpApps:
+  enabled: false
+  # e.g. views.eneotest.gdm.ai.gdm.se - must differ from global.domain.
+  contentHost: ""
 
 # Secrets configuration
 secrets:
