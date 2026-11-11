@@ -1,0 +1,65 @@
+{{- /*
+Extra hosts (extraHosts / ingress.extraHosts) are aliases of the primary domain.
+Eneo 2.3 binds a browser login to the host it started on but always returns to
+the primary domain (OIDC callback), so a login started on an alias fails with
+"oidc_attempt_rejected". With ingress.redirectExtraHosts the browser is sent to
+the same path on the primary domain instead.
+
+Purely additive: the frontend and backend ingresses are untouched. This router
+(priority 10) sits above the frontend catch-all (1) and below the backend (20),
+so /api, /scim, /docs, ... keep working on every host for API clients.
+TLS secrets are the ones cert-manager already issues via the frontend ingress;
+this ingress deliberately has no cert-manager annotation.
+*/ -}}
+{{- $extra := concat (.Values.extraHosts | default list) (.Values.ingress.extraHosts | default list) }}
+{{- if and .Values.ingress.enabled .Values.ingress.redirectExtraHosts $extra }}
+{{- $name := printf "%s-redirect-extra-hosts" (include "eneo.fullname" .) }}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "eneo.labels" . | nindent 4 }}
+spec:
+  redirectRegex:
+    regex: '^https?://[^/]+(.*)$'
+    replacement: 'https://{{ .Values.global.domain }}${1}'
+    permanent: false
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "eneo.labels" . | nindent 4 }}
+  annotations:
+    traefik.ingress.kubernetes.io/router.priority: "10"
+    traefik.ingress.kubernetes.io/router.middlewares: {{ .Release.Namespace }}-{{ $name }}@kubernetescrd
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+  {{- range $extra }}
+  - hosts:
+    - {{ . }}
+    secretName: {{ . | replace "." "-" }}-tls
+  {{- end }}
+  {{- end }}
+  rules:
+  {{- range $extra }}
+  - host: {{ . }}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ include "eneo.fullname" $ }}-frontend
+            port:
+              number: {{ $.Values.frontend.service.port }}
+  {{- end }}
+{{- end }}
