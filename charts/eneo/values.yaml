@@ -298,6 +298,11 @@ ingress:
   tls:
     enabled: true
     # secretName will be auto-generated
+  # Send browsers on an extra host (extraHosts / ingress.extraHosts) to the same
+  # path on global.domain. Needed with Eneo 2.3+, where a login started on an
+  # alias fails because the OIDC callback always returns to global.domain.
+  # API paths (/api, /scim, /docs, ...) keep working on every host.
+  redirectExtraHosts: false
 
 # Federation / multi-tenant ingress
 # Extra hostnames for per-tenant federation subdomains.
