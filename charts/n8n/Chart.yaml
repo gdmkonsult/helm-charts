@@ -2,8 +2,8 @@ apiVersion: v2
 name: n8n
 description: A Helm chart for n8n workflow automation
 type: application
-version: 1.0.66
-appVersion: "2.47.5"
+version: 1.0.67
+appVersion: "2.47.7"
 keywords:
   - n8n
   - automation
