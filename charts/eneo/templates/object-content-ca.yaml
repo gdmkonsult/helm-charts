@@ -1,0 +1,14 @@
+{{- $bundle := include "eneo.objectContentCa.bundle" . | trim }}
+{{- if $bundle }}
+# CA certificates (public) of the RustFS instances in this namespace, see
+# eneo.objectContentCa.bundle. Reloader restarts the Eneo pods on change.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "eneo.fullname" . }}-object-content-ca
+  labels:
+    {{- include "eneo.labels" . | nindent 4 }}
+data:
+  ca.crt: |
+    {{- $bundle | nindent 4 }}
+{{- end }}

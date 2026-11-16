@@ -102,7 +102,7 @@ spec:
             name: {{ include "eneo.fullname" . }}-config
         - secretRef:
             name: {{ include "eneo.fullname" . }}-secrets
-        {{- if .Values.config.objectContentCaSecret }}
+        {{- if include "eneo.objectContentCa.enabled" . }}
         volumeMounts:
         {{- include "eneo.objectContentCa.volumeMount" . | nindent 8 }}
         {{- end }}

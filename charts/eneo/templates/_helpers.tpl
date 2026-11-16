@@ -285,19 +285,43 @@ Validate required values
 {{- end -}}
 
 {{/*
-Object storage CA (Eneo 2.3+): trust only ca.crt from the RustFS server Secret
-(config.objectContentCaSecret). Env and mount always go together; the env
-without the file would fail settings validation at startup.
+Object storage CA (Eneo 2.3+). Eneo trusts either
+- config.objectContentCaSecret: ca.crt from one named Secret, or
+- automatically (config.objectContentCaAutoDetect): the CAs of every RustFS
+  instance (llmportal S3-lagring) in this namespace, found via lookup and
+  bundled into ConfigMap <fullname>-object-content-ca.
+Env and mount are only rendered when a CA exists: the env without the file
+fails Eneo's settings validation. The lookup runs at install/upgrade, so a
+RustFS instance created later needs one re-render (llmportal triggers it).
 */}}
+{{- define "eneo.objectContentCa.bundle" -}}
+{{- if and .Values.config.objectContentCaAutoDetect (not .Values.config.objectContentCaSecret) -}}
+{{- $cas := dict -}}
+{{- range (lookup "v1" "Secret" .Release.Namespace "").items | default list -}}
+{{- $labels := .metadata.labels | default dict -}}
+{{- if and (eq (get $labels "app.kubernetes.io/name") "rustfs") (eq (get $labels "app.kubernetes.io/managed-by") "rustfs-operator") (hasSuffix "-server-tls" .metadata.name) (hasKey (.data | default dict) "ca.crt") -}}
+{{- $_ := set $cas .metadata.name (index .data "ca.crt" | b64dec | trim) -}}
+{{- end -}}
+{{- end -}}
+{{- range $name := keys $cas | sortAlpha -}}
+{{ index $cas $name }}
+{{ end -}}
+{{- end -}}
+{{- end }}
+
+{{- define "eneo.objectContentCa.enabled" -}}
+{{- if or .Values.config.objectContentCaSecret (include "eneo.objectContentCa.bundle" . | trim) -}}true{{- end -}}
+{{- end }}
+
 {{- define "eneo.objectContentCa.env" -}}
-{{- if .Values.config.objectContentCaSecret }}
+{{- if include "eneo.objectContentCa.enabled" . }}
 - name: OBJECT_CONTENT_CA_BUNDLE
   value: /etc/eneo/object-content-ca/ca.crt
 {{- end }}
 {{- end }}
 
 {{- define "eneo.objectContentCa.volumeMount" -}}
-{{- if .Values.config.objectContentCaSecret }}
+{{- if include "eneo.objectContentCa.enabled" . }}
 - name: object-content-ca
   mountPath: /etc/eneo/object-content-ca
   readOnly: true
@@ -312,5 +336,9 @@ without the file would fail settings validation at startup.
     items:
       - key: ca.crt
         path: ca.crt
+{{- else if include "eneo.objectContentCa.enabled" . }}
+- name: object-content-ca
+  configMap:
+    name: {{ include "eneo.fullname" . }}-object-content-ca
 {{- end }}
 {{- end }}

@@ -50,17 +50,30 @@ worker entrypoint and does not recognize the Flow-only Celery switches, so keep
 To store files on an in-cluster RustFS instance from llmportal (S3-lagring),
 connect it in **Admin > File storage** with endpoint
 `https://<app>-io.<namespace>.svc.cluster.local:9000`, region `us-east-1`,
-path-style addressing and an access key from llmportal. Eneo must trust the
-instance's private CA:
+path-style addressing and an access key from llmportal.
+
+Eneo trusts the instance's private CA automatically: at install/upgrade the
+chart looks up the RustFS server certificates in its namespace (Secrets
+`*-server-tls` labelled `app.kubernetes.io/name=rustfs`,
+`app.kubernetes.io/managed-by=rustfs-operator`), bundles their `ca.crt` into
+ConfigMap `<fullname>-object-content-ca`, mounts it into backend, workers and
+the migration job and sets `OBJECT_CONTENT_CA_BUNDLE`. Without RustFS in the
+namespace nothing is rendered.
+
+Because the lookup runs when the chart renders, a RustFS instance created
+after Eneo needs one re-render. llmportal does that itself: it changes
+`config.objectContentCaRevision` (ignored by the chart) when the namespace's
+RustFS CAs change, and Reloader restarts the pods if the bundle changed.
+
+Overrides:
 
 ```yaml
 config:
-  objectContentCaSecret: <app>-rustfs-server-tls   # <app>-server-tls if <app> contains "rustfs"
+  objectContentCaSecret: my-ca-secret     # trust ca.crt of this Secret only
+  objectContentCaAutoDetect: false        # no automatic CA
 ```
 
-Only `ca.crt` from that Secret is mounted (into backend, workers and the
-migration job) and `OBJECT_CONTENT_CA_BUNDLE` is set. Plain-HTTP endpoints are
-not supported by this chart.
+Plain-HTTP endpoints are not supported by this chart.
 
 ### Upgrading to a new major/minor version (2.2 → 2.3, 2.3 → 3.0, ...)
 

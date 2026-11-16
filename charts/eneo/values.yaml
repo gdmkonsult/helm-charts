@@ -384,10 +384,11 @@ config:
   dbPoolMaxOverflow: "2"
   dbPoolTimeout: "30"
   # Eneo 2.3 object storage (Admin > File storage) on an in-cluster RustFS
-  # instance from llmportal: name of its server TLS Secret
-  # (<rustfs-fullname>-server-tls, same namespace). Only ca.crt is mounted and
-  # OBJECT_CONTENT_CA_BUNDLE points at it. Endpoint:
-  # https://<app>-io.<namespace>.svc.cluster.local:9000
+  # instance from llmportal (https://<app>-io.<namespace>.svc.cluster.local:9000).
+  # By default Eneo trusts the CAs of all RustFS instances in its namespace
+  # (found at install/upgrade). objectContentCaSecret overrides that with the
+  # ca.crt of one Secret, e.g. for an external endpoint with a private CA.
+  objectContentCaAutoDetect: true
   objectContentCaSecret: ""
   # Gunicorn/uvicorn only trusts X-Forwarded-Proto from these addresses when
   # deriving signed download links' scheme (request.base_url). Without it the
