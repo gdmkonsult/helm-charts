@@ -3675,6 +3675,24 @@ entries:
     version: 1.0.0
   hej:
   - apiVersion: v2
+    appVersion: v8.5.10
+    created: "2026-11-16T03:04:15.27181659Z"
+    description: A Helm chart for Hej AI (gdm-openai + simoon-ui + MariaDB)
+    digest: bdc9735ddc7fb91c5a1b8810fadb382e851e8f1d1afec225aeb7090ab41134ed
+    keywords:
+    - hej
+    - ai
+    - chat
+    - assistant
+    - gdm
+    maintainers:
+    - name: GDM
+    name: hej
+    type: application
+    urls:
+    - https://github.com/gdmkonsult/helm-charts/releases/download/hej-0.8.43/hej-0.8.43.tgz
+    version: 0.8.43
+  - apiVersion: v2
     appVersion: v8.5.9
     created: "2026-11-16T02:45:32.557046833Z"
     description: A Helm chart for Hej AI (gdm-openai + simoon-ui + MariaDB)
@@ -5995,4 +6013,4 @@ entries:
     urls:
     - https://github.com/gdmkonsult/helm-charts/releases/download/switchyard-0.1.0/switchyard-0.1.0.tgz
     version: 0.1.0
-generated: "2026-11-16T02:45:32.557818545Z"
+generated: "2026-11-16T03:04:15.272462414Z"
