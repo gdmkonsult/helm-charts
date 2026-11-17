@@ -86,17 +86,15 @@ metadata:
 spec:
   priority: 10
   tier: application
+  # Single selector matching every chart pod (main + auth-proxy + workers).
+  # Do NOT make appliedTo conditional on authProxy.enabled: helm's three-way
+  # merge on the Antrea CRD does not reliably reconcile list-of-maps without a
+  # merge key, so a toggle flip could leave the live policy stale (happened
+  # 2026-11-17: auth-proxy got no Traefik traffic after enabling SSO).
   appliedTo:
     - podSelector:
         matchLabels:
           {{- include "n8n.selectorLabels" . | nindent 10 }}
-          app.kubernetes.io/component: main
-    {{- if and .Values.authProxy.enabled (eq .Values.authProxy.type "oauth2-proxy") }}
-    - podSelector:
-        matchLabels:
-          {{- include "n8n.selectorLabels" . | nindent 10 }}
-          app.kubernetes.io/component: auth-proxy
-    {{- end }}
   ingress:
     - action: Allow
       from:
