@@ -2,8 +2,8 @@ apiVersion: v2
 name: hej
 description: A Helm chart for Hej AI (gdm-openai + simoon-ui + MariaDB)
 type: application
-version: 0.8.45
-appVersion: "v8.6.0"
+version: 0.8.46
+appVersion: "v8.6.1"
 keywords:
   - hej
   - ai
