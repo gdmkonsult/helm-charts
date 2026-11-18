@@ -22,6 +22,32 @@ Create a default fully qualified app name.
 {{- end }}
 
 {{/*
+Compute the fullname of the source release for copyFrom cloning.
+*/}}
+{{- define "hej.sourceFullname" -}}
+{{- $name := default .Chart.Name .Values.nameOverride }}
+{{- if contains $name .Values.copyFrom.releaseName }}
+{{- .Values.copyFrom.releaseName | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- printf "%s-%s" .Values.copyFrom.releaseName $name | trunc 63 | trimSuffix "-" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Validate values that cannot be left ambiguous during cloning.
+*/}}
+{{- define "hej.validateValues" -}}
+{{- if .Values.copyFrom.enabled }}
+{{- if not .Values.copyFrom.releaseName }}
+{{- fail "copyFrom.releaseName is required when copyFrom.enabled is true" }}
+{{- end }}
+{{- if eq .Values.copyFrom.releaseName .Release.Name }}
+{{- fail "copyFrom.releaseName must reference another Hej release" }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
 Create chart name and version as used by the chart label.
 */}}
 {{- define "hej.chart" -}}

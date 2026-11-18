@@ -11,6 +11,50 @@ imagePullSecrets:
 hostAliases:
   {{- toYaml . | nindent 2 }}
 {{- end }}
+{{- if .Values.copyFrom.enabled }}
+initContainers:
+  - name: wait-for-clone
+    image: "{{ .Values.mariadb.image.repository }}:{{ .Values.mariadb.image.tag }}"
+    imagePullPolicy: {{ .Values.mariadb.image.pullPolicy }}
+    command:
+      - sh
+      - -c
+      - |
+        echo "Waiting for cloned MariaDB data..."
+        attempts=0
+        while [ "$attempts" -lt 900 ]; do
+          ready="$(
+            mariadb \
+              --protocol=TCP \
+              --host="$MYSQL_HOST" \
+              --user="$MYSQL_USER" \
+              --database="$MYSQL_DB" \
+              --batch \
+              --skip-column-names \
+              -e "SELECT 'ready' FROM app_config LIMIT 1" 2>/dev/null
+          )"
+          if [ "$ready" = "ready" ]; then
+            echo "Cloned data is ready."
+            exit 0
+          fi
+          attempts=$((attempts + 1))
+          sleep 2
+        done
+        echo "Timed out waiting for cloned MariaDB data." >&2
+        exit 1
+    env:
+      - name: MYSQL_HOST
+        value: {{ include "hej.mariadbHost" . | quote }}
+      - name: MYSQL_USER
+        value: {{ .Values.mariadb.auth.username | quote }}
+      - name: MYSQL_PWD
+        valueFrom:
+          secretKeyRef:
+            name: {{ include "hej.fullname" . }}-secrets
+            key: MARIADB_PASSWORD
+      - name: MYSQL_DB
+        value: {{ .Values.mariadb.auth.database | quote }}
+{{- end }}
 containers:
   - name: backend
     image: "{{ .Values.backend.image.repository }}:{{ default .Chart.AppVersion .Values.backend.image.tag }}"

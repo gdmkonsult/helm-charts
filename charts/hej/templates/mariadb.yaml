@@ -20,6 +20,11 @@ spec:
   rootPasswordSecretKeyRef:
     name: {{ include "hej.fullname" . }}-secrets
     key: MARIADB_ROOT_PASSWORD
+  {{- if .Values.copyFrom.enabled }}
+  bootstrapFrom:
+    backupRef:
+      name: {{ include "hej.fullname" . }}-mariadb-copy
+  {{- end }}
   storage:
     size: {{ .Values.mariadb.persistence.size }}
     {{- if .Values.mariadb.persistence.storageClass }}

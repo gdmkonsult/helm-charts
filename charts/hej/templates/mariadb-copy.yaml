@@ -1,0 +1,38 @@
+{{- if and .Values.mariadb.enabled .Values.copyFrom.enabled -}}
+apiVersion: k8s.mariadb.com/v1alpha1
+kind: Backup
+metadata:
+  name: {{ include "hej.fullname" . }}-mariadb-copy
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hej.labels" . | nindent 4 }}
+    app.kubernetes.io/component: mariadb-copy
+spec:
+  mariaDbRef:
+    name: {{ include "hej.sourceFullname" . }}-mariadb
+    waitForIt: true
+  compression: gzip
+  databases:
+    - {{ .Values.mariadb.auth.database | quote }}
+  ignoreGlobalPriv: true
+  maxRetention: "1h"
+  backoffLimit: 5
+  restartPolicy: OnFailure
+  storage:
+    persistentVolumeClaim:
+      accessModes:
+        - ReadWriteOnce
+      {{- if .Values.mariadb.persistence.storageClass }}
+      storageClassName: {{ .Values.mariadb.persistence.storageClass | quote }}
+      {{- end }}
+      resources:
+        requests:
+          storage: {{ .Values.mariadb.persistence.size }}
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+{{- end }}

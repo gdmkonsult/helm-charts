@@ -1,7 +1,19 @@
 # Global settings
 global:
   domain: ""
+  # Kept for compatibility with values created before testEnvironment moved
+  # to the root of the chart.
   testEnvironment: false
+
+# Disables scheduled database backups and marks the installation as a test app.
+testEnvironment: false
+
+# Clone from an existing deployment in the same namespace. A fresh logical
+# backup is created from the source MariaDB and restored before the backend
+# starts. This only takes effect on initial deploy.
+copyFrom:
+  enabled: false
+  releaseName: ""
 
 customer:
   company: ""

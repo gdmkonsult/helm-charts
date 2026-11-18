@@ -1,4 +1,4 @@
-{{- if and .Values.mariadb.enabled .Values.mariadb.backup.enabled (not .Values.global.testEnvironment) -}}
+{{- if and .Values.mariadb.enabled .Values.mariadb.backup.enabled (not (or .Values.testEnvironment .Values.global.testEnvironment)) -}}
 apiVersion: k8s.mariadb.com/v1alpha1
 kind: Backup
 metadata:

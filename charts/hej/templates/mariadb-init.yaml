@@ -1,5 +1,4 @@
-{{- if .Values.mariadb.enabled -}}
-{{- if .Values.mariadb.enabled -}}
+{{- if and .Values.mariadb.enabled (not .Values.copyFrom.enabled) -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -123,5 +122,4 @@ spec:
   sqlConfigMapKeyRef:
     name: {{ include "hej.fullname" . }}-mariadb-init-sql-{{ .Release.Revision }}
     key: init.sql
-{{- end }}
 {{- end }}
