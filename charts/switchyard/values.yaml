@@ -20,7 +20,7 @@ auth:
   apiKey: "" # If empty, auto-generates csk_<random> and preserves across helm upgrades
   proxyImage:
     repository: nginx
-    tag: "1.27-alpine"
+    tag: "1.28.3-alpine"
     pullPolicy: IfNotPresent
   resources:
     requests:
