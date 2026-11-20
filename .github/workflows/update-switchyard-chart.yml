@@ -22,20 +22,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Check for new Switchyard release
+      - name: Check for new versions
         id: version
         run: |
-          # Read current appVersion from Chart.yaml
           CURRENT_APP=$(grep '^appVersion:' charts/switchyard/Chart.yaml | sed 's/appVersion: *"\(.*\)"/\1/')
 
-          # Check both releases and tags from upstream NVIDIA-NeMo/Switchyard
-          # Collect all tags like vX.Y.Z (excluding release candidates like -rc)
+          # --- Switchyard app version: check both releases and tags from upstream NVIDIA-NeMo/Switchyard ---
           LATEST_TAG=$(curl -sf "https://api.github.com/repos/NVIDIA-NeMo/Switchyard/tags?per_page=100" \
             | jq -r '.[].name' \
             | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
             | sort -V | tail -1)
 
-          # Also check official GitHub releases if available
           LATEST_RELEASE=$(curl -sf "https://api.github.com/repos/NVIDIA-NeMo/Switchyard/releases?per_page=100" \
             | jq -r '.[] | select(.draft | not) | select(.prerelease | not) | .tag_name' \
             | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
@@ -43,50 +40,87 @@ jobs:
 
           CANDIDATE=$(printf "%s\n%s\n" "$LATEST_TAG" "$LATEST_RELEASE" | grep -v '^$' | sort -V | tail -1)
 
+          APP_CHANGED=false
+          APP_VERSION="$CURRENT_APP"
+
           if [[ -z "$CANDIDATE" ]]; then
             echo "Could not fetch tags/releases from NVIDIA-NeMo/Switchyard"
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          APP_VERSION="${CANDIDATE#v}"
-
-          # Allow manual override if specified via workflow_dispatch
-          if [[ -n "${{ github.event.inputs.app_version }}" ]]; then
-            APP_VERSION="${{ github.event.inputs.app_version }}"
-            APP_VERSION="${APP_VERSION#v}"
           else
-            # Ensure candidate is strictly newer than current appVersion
-            HIGHEST=$(printf "%s\n%s\n" "$CURRENT_APP" "$APP_VERSION" | sort -V | tail -1)
-            if [[ "$HIGHEST" != "$APP_VERSION" || "$APP_VERSION" == "$CURRENT_APP" ]]; then
-              echo "Candidate ${APP_VERSION} is not newer than current ${CURRENT_APP} - skipping."
-              echo "skip=true" >> "$GITHUB_OUTPUT"
-              exit 0
+            CANDIDATE="${CANDIDATE#v}"
+
+            # Allow manual override if specified via workflow_dispatch (bypasses newer-check)
+            if [[ -n "${{ github.event.inputs.app_version }}" ]]; then
+              APP_VERSION="${{ github.event.inputs.app_version }}"
+              APP_VERSION="${APP_VERSION#v}"
+              APP_CHANGED=true
+            elif [[ "$CANDIDATE" != "$CURRENT_APP" ]]; then
+              # Ensure candidate is strictly newer than current appVersion
+              HIGHEST=$(printf "%s\n%s\n" "$CURRENT_APP" "$CANDIDATE" | sort -V | tail -1)
+              if [[ "$HIGHEST" == "$CANDIDATE" ]]; then
+                APP_VERSION="$CANDIDATE"
+                APP_CHANGED=true
+              fi
             fi
           fi
 
-          echo "Latest Switchyard release: ${APP_VERSION}"
-          echo "Current chart appVersion: ${CURRENT_APP}"
+          # --- nginx auth-proxy image: latest X.Y.Z-alpine from Docker Hub ---
+          CURRENT_NGINX=$(awk '/repository: nginx/{getline; gsub(/tag: *"|"/, ""); print}' charts/switchyard/values.yaml)
 
-          if [[ "$APP_VERSION" == "$CURRENT_APP" ]]; then
-            echo "Already up to date."
+          LATEST_NGINX=""
+          for PAGE in 1 2 3; do
+            TAGS=$(curl -sf "https://hub.docker.com/v2/repositories/library/nginx/tags/?page_size=100&page=${PAGE}&name=alpine" \
+              | jq -r '.results[].name' \
+              | grep -E '^[0-9]+\.[0-9]+\.[0-9]+-alpine$' || true)
+            if [[ -n "$TAGS" ]]; then
+              LATEST_NGINX=$(printf "%s\n%s\n" "$LATEST_NGINX" "$TAGS" | grep -v '^$' | sort -V | tail -1)
+            fi
+          done
+
+          NGINX_CHANGED=false
+          NGINX_VERSION="$CURRENT_NGINX"
+          if [[ -z "$LATEST_NGINX" ]]; then
+            echo "Could not fetch nginx tags from Docker Hub"
+          elif [[ "$LATEST_NGINX" != "$CURRENT_NGINX" ]]; then
+            # Only move forward, never downgrade
+            HIGHEST=$(printf "%s\n%s\n" "$CURRENT_NGINX" "$LATEST_NGINX" | sort -V | tail -1)
+            if [[ "$HIGHEST" == "$LATEST_NGINX" ]]; then
+              NGINX_VERSION="$LATEST_NGINX"
+              NGINX_CHANGED=true
+            else
+              echo "nginx candidate ${LATEST_NGINX} is older than current ${CURRENT_NGINX} - ignoring"
+            fi
+          fi
+
+          if [[ "$APP_CHANGED" != "true" && "$NGINX_CHANGED" != "true" ]]; then
+            echo "Nothing to update (app=${CURRENT_APP}, nginx=${CURRENT_NGINX})."
             echo "skip=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-
-          echo "skip=false" >> "$GITHUB_OUTPUT"
-          echo "app_version=${APP_VERSION}" >> "$GITHUB_OUTPUT"
 
           # Bump chart patch version
           CURRENT=$(grep '^version:' charts/switchyard/Chart.yaml | awk '{print $2}')
           MAJOR=$(echo "$CURRENT" | cut -d. -f1)
           MINOR=$(echo "$CURRENT" | cut -d. -f2)
           PATCH=$(echo "$CURRENT" | cut -d. -f3)
-          NEW_PATCH=$((PATCH + 1))
-          CHART_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}"
-          echo "chart_version=${CHART_VERSION}" >> "$GITHUB_OUTPUT"
+          CHART_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
 
-          echo "Chart version: ${CURRENT} -> ${CHART_VERSION}"
+          SUMMARY=""
+          if [[ "$APP_CHANGED" == "true" ]]; then
+            SUMMARY="appVersion ${CURRENT_APP} -> ${APP_VERSION}"
+          fi
+          if [[ "$NGINX_CHANGED" == "true" ]]; then
+            [[ -n "$SUMMARY" ]] && SUMMARY="${SUMMARY}, "
+            SUMMARY="${SUMMARY}nginx ${CURRENT_NGINX} -> ${NGINX_VERSION}"
+          fi
+
+          echo "Updating: ${SUMMARY} (chart ${CURRENT} -> ${CHART_VERSION})"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          echo "app_changed=${APP_CHANGED}" >> "$GITHUB_OUTPUT"
+          echo "app_version=${APP_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "nginx_changed=${NGINX_CHANGED}" >> "$GITHUB_OUTPUT"
+          echo "nginx_version=${NGINX_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "chart_version=${CHART_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "summary=${SUMMARY}" >> "$GITHUB_OUTPUT"
 
       - name: Trigger container image build in Switchyard repo
         if: steps.version.outputs.skip != 'true'
@@ -113,14 +147,21 @@ jobs:
       - name: Update Chart.yaml and values.yaml
         if: steps.version.outputs.skip != 'true'
         run: |
+          if [[ "${{ steps.version.outputs.app_changed }}" == "true" ]]; then
+            sed -i "s/^appVersion: .*/appVersion: \"${{ steps.version.outputs.app_version }}\"/" charts/switchyard/Chart.yaml
+            sed -i 's/tag: "v.*"/tag: "v'"${{ steps.version.outputs.app_version }}"'"/' charts/switchyard/values.yaml
+          fi
+          if [[ "${{ steps.version.outputs.nginx_changed }}" == "true" ]]; then
+            NGINX_VERSION="${{ steps.version.outputs.nginx_version }}"
+            awk -v v="$NGINX_VERSION" '/repository: nginx/{print; getline; gsub(/tag: *"[^"]*"/, "tag: \"" v "\"")} {print}' charts/switchyard/values.yaml > values.yaml.tmp
+            mv values.yaml.tmp charts/switchyard/values.yaml
+          fi
           sed -i "s/^version: .*/version: ${{ steps.version.outputs.chart_version }}/" charts/switchyard/Chart.yaml
-          sed -i "s/^appVersion: .*/appVersion: \"${{ steps.version.outputs.app_version }}\"/" charts/switchyard/Chart.yaml
-          sed -i 's/tag: "v.*"/tag: "v'"${{ steps.version.outputs.app_version }}"'"/' charts/switchyard/values.yaml
 
           echo "Updated Chart.yaml:"
           cat charts/switchyard/Chart.yaml
-          echo "Updated values.yaml image tag:"
-          grep -A1 'repository: ghcr.io/gdmkonsult/switchyard' charts/switchyard/values.yaml
+          echo "Updated values.yaml image tags:"
+          grep -B1 -A1 'tag:' charts/switchyard/values.yaml
 
       - name: Commit and push
         if: steps.version.outputs.skip != 'true'
@@ -129,7 +170,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add charts/switchyard/Chart.yaml charts/switchyard/values.yaml
           git diff --cached --quiet && exit 0
-          git commit -m "chore(switchyard): bump appVersion to ${{ steps.version.outputs.app_version }} and chart version to ${{ steps.version.outputs.chart_version }}"
+          git commit -m "chore(switchyard): update ${{ steps.version.outputs.summary }} (chart ${{ steps.version.outputs.chart_version }})"
           git push
 
       - name: Trigger Helm Publish
