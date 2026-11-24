@@ -6206,6 +6206,26 @@ entries:
   switchyard:
   - apiVersion: v2
     appVersion: 0.4.0
+    created: "2026-11-24T10:01:25.780452809Z"
+    description: A Helm chart for NVIDIA NeMo Switchyard dynamic model routing proxy
+    digest: 668ec80df5c50c7744d8a37d4194320d623386a315413ade0aec78b23f36b301
+    keywords:
+    - switchyard
+    - llm
+    - proxy
+    - router
+    - ai
+    - openai
+    - anthropic
+    maintainers:
+    - name: GDM
+    name: switchyard
+    type: application
+    urls:
+    - https://github.com/gdmkonsult/helm-charts/releases/download/switchyard-0.1.7/switchyard-0.1.7.tgz
+    version: 0.1.7
+  - apiVersion: v2
+    appVersion: 0.4.0
     created: "2026-11-24T06:11:09.847968841Z"
     description: A Helm chart for NVIDIA NeMo Switchyard dynamic model routing proxy
     digest: 9ec7ae281e9948f4f50dbc1039139d1d2ffcd84aa6f177c3aa27ca6dc1eede2c
@@ -6344,4 +6364,4 @@ entries:
     urls:
     - https://github.com/gdmkonsult/helm-charts/releases/download/switchyard-0.1.0/switchyard-0.1.0.tgz
     version: 0.1.0
-generated: "2026-11-24T06:11:09.848520799Z"
+generated: "2026-11-24T10:01:25.780857248Z"
