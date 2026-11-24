@@ -2,8 +2,8 @@ apiVersion: v2
 name: switchyard
 description: A Helm chart for NVIDIA NeMo Switchyard dynamic model routing proxy
 type: application
-version: 0.1.5
-appVersion: "0.3.0"
+version: 0.1.6
+appVersion: "0.4.0"
 keywords:
   - switchyard
   - llm
