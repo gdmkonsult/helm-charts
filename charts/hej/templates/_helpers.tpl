@@ -89,6 +89,23 @@ Backend host name inside namespace
 {{- end }}
 
 {{/*
+Tool runtime (GDM Runtime Tools) host name inside namespace
+*/}}
+{{- define "hej.toolRuntimeHost" -}}
+{{- printf "%s-tool-runtime" (include "hej.fullname" .) }}
+{{- end }}
+
+{{/*
+The backend port that serves only GET /api/internal/runtime-files/<token>.
+The tool runtime may reach this port and nothing else on the backend.
+*/}}
+{{- define "hej.backendRuntimeFilesPort" -}}8081{{- end }}
+
+{{- define "hej.backendRuntimeFilesOrigin" -}}
+{{- printf "http://%s:%s" (include "hej.backendHost" .) (include "hej.backendRuntimeFilesPort" .) }}
+{{- end }}
+
+{{/*
 Headless Service that only resolves to ready backend pods of the current pod
 spec. The frontend waits on it, so a previous backend that is still running
 during an upgrade can't satisfy the wait.

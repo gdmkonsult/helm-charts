@@ -118,12 +118,32 @@ containers:
           secretKeyRef:
             name: {{ include "hej.fullname" . }}-secrets
             key: HEJ_OVERVIEW_PASSWORD
+      {{- if .Values.toolRuntime.enabled }}
+      - name: TOOL_RUNTIME_URL
+        value: {{ printf "http://%s:%v/mcp" (include "hej.toolRuntimeHost" .) .Values.toolRuntime.service.port | quote }}
+      - name: TOOL_RUNTIME_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: {{ include "hej.fullname" . }}-secrets
+            key: TOOL_RUNTIME_TOKEN
+      - name: RUNTIME_FILE_SIGNING_KEY
+        valueFrom:
+          secretKeyRef:
+            name: {{ include "hej.fullname" . }}-secrets
+            key: RUNTIME_FILE_SIGNING_KEY
+      - name: RUNTIME_BACKEND_ORIGIN
+        value: {{ include "hej.backendRuntimeFilesOrigin" . | quote }}
+      {{- end }}
       {{- with .Values.extraEnv }}
       {{- toYaml . | nindent 6 }}
       {{- end }}
     ports:
       - name: http
         containerPort: 8080
+      {{- if .Values.toolRuntime.enabled }}
+      - name: runtime-files
+        containerPort: {{ include "hej.backendRuntimeFilesPort" . }}
+      {{- end }}
     # The backend runs DB migrations before it starts listening on 8080, so
     # allow up to 15 minutes before liveness can restart it mid-migration.
     startupProbe:
@@ -222,6 +242,11 @@ spec:
     - port: {{ .Values.backend.service.port }}
       targetPort: {{ .Values.backend.service.targetPort }}
       name: http
+    {{- if .Values.toolRuntime.enabled }}
+    - port: {{ include "hej.backendRuntimeFilesPort" . }}
+      targetPort: runtime-files
+      name: runtime-files
+    {{- end }}
   selector:
     {{- include "hej.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: backend

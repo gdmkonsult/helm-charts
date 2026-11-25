@@ -114,6 +114,51 @@ backend:
       cpu: "100m"
       memory: 256Mi
 
+# GDM Runtime Tools (hej-tool-runtime): sandboxed calculation, table analysis,
+# charts and Word/PDF/Excel documents for modes with the "GDM Runtime Tools"
+# switch on. Only the backend can call it, and it can only reach the backend
+# (signed file downloads) and DNS.
+toolRuntime:
+  enabled: true
+  image:
+    repository: ghcr.io/gdmkonsult/hej-tool-runtime
+    tag: "" # Defaults to .Chart.AppVersion
+    pullPolicy: Always
+  service:
+    port: 8080
+  # Refuse to become ready unless every job runs Landlock-confined (landrun).
+  # Needs a Linux kernel >= 6.12 with Landlock enabled (Landlock ABI >= 6).
+  requireConfinement: true
+  # Left empty on purpose: a seccomp profile that filters the landlock_*
+  # syscalls disables job confinement (readiness then fails closed). Set to
+  # {type: RuntimeDefault} only after verifying /readyz on the target nodes.
+  seccompProfile: {}
+  resources:
+    limits:
+      cpu: "2"
+      memory: 2Gi
+    requests:
+      cpu: "50m"
+      memory: 192Mi
+  # /tmp is memory-backed (job dirs) and counts towards the memory limit.
+  tmpSizeLimit: 512Mi
+  # Extra runtime env, e.g. MAX_CONCURRENCY, MAX_QUEUE, MAX_PER_USER, JOB_TIMEOUT_MS.
+  env: {}
+  nodeSelector: {}
+  # Example: schedule only on nodes labelled as having a Landlock-capable
+  # kernel (>= 6.12), e.g. `kubectl label node <n> hej.gdm.se/landlock=true`.
+  #   nodeAffinity:
+  #     requiredDuringSchedulingIgnoredDuringExecution:
+  #       nodeSelectorTerms:
+  #         - matchExpressions:
+  #             - key: hej.gdm.se/landlock
+  #               operator: In
+  #               values: ["true"]
+  affinity: {}
+  tolerations: []
+  networkPolicy:
+    enabled: true
+
 # Ingress Configuration (Traefik + cert-manager)
 ingress:
   enabled: true

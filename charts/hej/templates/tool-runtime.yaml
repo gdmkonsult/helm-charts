@@ -1,0 +1,191 @@
+{{- if .Values.toolRuntime.enabled -}}
+# GDM Runtime Tools. Runs model-written code and parses user files, so the pod
+# has no Kubernetes API token, no service links, a read-only root filesystem,
+# no capabilities, and every job is additionally Landlock-confined inside it.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "hej.toolRuntimeHost" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hej.labels" . | nindent 4 }}
+    app.kubernetes.io/component: tool-runtime
+automountServiceAccountToken: false
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "hej.toolRuntimeHost" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hej.labels" . | nindent 4 }}
+    app.kubernetes.io/component: tool-runtime
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "hej.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: tool-runtime
+  template:
+    metadata:
+      labels:
+        {{- include "hej.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: tool-runtime
+    spec:
+      serviceAccountName: {{ include "hej.toolRuntimeHost" . }}
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        {{- with .Values.toolRuntime.seccompProfile }}
+        seccompProfile:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+      {{- with .Values.toolRuntime.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.toolRuntime.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.toolRuntime.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: tool-runtime
+          image: "{{ .Values.toolRuntime.image.repository }}:{{ default .Chart.AppVersion .Values.toolRuntime.image.tag }}"
+          imagePullPolicy: {{ .Values.toolRuntime.image.pullPolicy }}
+          env:
+            - name: PORT
+              value: "8080"
+            - name: TOOL_RUNTIME_TOKEN_FILE
+              value: /var/run/secrets/hej-tool-runtime/token
+            - name: BACKEND_ORIGIN
+              value: {{ include "hej.backendRuntimeFilesOrigin" . | quote }}
+            - name: REQUIRE_CONFINEMENT
+              value: {{ .Values.toolRuntime.requireConfinement | quote }}
+            {{- range $k, $v := .Values.toolRuntime.env }}
+            - name: {{ $k }}
+              value: {{ $v | quote }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            periodSeconds: 15
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            privileged: false
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            {{- toYaml .Values.toolRuntime.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: token
+              mountPath: /var/run/secrets/hej-tool-runtime
+              readOnly: true
+      volumes:
+        - name: tmp
+          emptyDir:
+            medium: Memory
+            sizeLimit: {{ .Values.toolRuntime.tmpSizeLimit }}
+        - name: token
+          secret:
+            secretName: {{ include "hej.toolRuntimeHost" . }}
+            defaultMode: 0440
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "hej.toolRuntimeHost" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hej.labels" . | nindent 4 }}
+    app.kubernetes.io/component: tool-runtime
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.toolRuntime.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "hej.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: tool-runtime
+{{- if .Values.toolRuntime.networkPolicy.enabled }}
+---
+# Only this release's backend may call the runtime, and the runtime may only
+# reach this release's backend (signed file downloads) and cluster DNS: no
+# database, no other tenant, no internet.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "hej.toolRuntimeHost" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "hej.labels" . | nindent 4 }}
+    app.kubernetes.io/component: tool-runtime
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "hej.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: tool-runtime
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- include "hej.selectorLabels" . | nindent 14 }}
+              app.kubernetes.io/component: backend
+      ports:
+        - port: 8080
+          protocol: TCP
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              {{- include "hej.selectorLabels" . | nindent 14 }}
+              app.kubernetes.io/component: backend
+      ports:
+        - port: {{ include "hej.backendRuntimeFilesPort" . }}
+          protocol: TCP
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+{{- end }}
+{{- end }}
