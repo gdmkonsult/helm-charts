@@ -121,8 +121,11 @@ spec:
             port: http
           initialDelaySeconds: 10
           periodSeconds: 10
-          timeoutSeconds: 5
-          failureThreshold: 3
+          {{- /* /api/healthz can stall well past 5s while the backend handles
+               large chat/file requests; a too-tight timeout caused restart
+               storms on top of OOM kills (Helsingborg 2026-11-26). */}}
+          timeoutSeconds: {{ .Values.backend.livenessProbe.timeoutSeconds }}
+          failureThreshold: {{ .Values.backend.livenessProbe.failureThreshold }}
         env:
         - name: POSTGRES_USER
           valueFrom:

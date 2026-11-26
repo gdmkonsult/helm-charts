@@ -32,6 +32,11 @@ backend:
     type: ClusterIP
     port: 8000
     targetPort: 8000
+  livenessProbe:
+    # /api/healthz can stall well past 5s while the backend handles large
+    # chat/file requests; 5s caused restart storms on top of OOM kills.
+    timeoutSeconds: 10
+    failureThreshold: 3
   resources:
     limits:
       cpu: "2"
@@ -399,6 +404,12 @@ config:
   # the chart's NetworkPolicy already restricts which pods can reach the
   # backend, and X-Forwarded-* only arrives through the ingress.
   forwardedAllowIps: "*"
+  # Audit-log export directory. Must live on a volume the tmp-cleanup CronJob
+  # never deletes: the shared-tmp cleanup removes top-level directories older
+  # than 48h, which deletes /tmp/exports (the image default) and breaks audit
+  # exports until the next backend restart. /app/data is the shared-data PVC,
+  # chowned to the backend user by the init container and never cleaned.
+  exportDir: "/app/data/exports"
 
 # Interactive tool views (MCP Apps, Eneo 2.3+): sandboxed HTML views for tool
 # results (interactive charts, query-result tables). Off by default; the tools
